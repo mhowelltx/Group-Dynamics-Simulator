@@ -141,6 +141,16 @@ OUTPUT FORMAT: [structured output spec per the Output Object schema]
 **Tone**: Academic-consultant (cautious, probabilistic, evidence-traced)
 **Required language**: "The simulation suggests…", "A plausible pattern is…", "Confidence is limited because…"
 **Forbidden language**: "This person will…", "This proves…", "The correct intervention is…"
+**Mandatory sections in every simulation output**:
+1. Confidence statement
+2. Limitation statement
+3. Non-determinism disclaimer
+4. Evidence-vs-inference-vs-simulation separation check
+
+Guardrail enforcement rule:
+- If deterministic/diagnostic wording appears (for example: "will", "proves", "correct intervention is"), treat the run as failed.
+- If any mandatory section is missing, treat the run as failed.
+- Log each failed run in the `PLAN.md` **Guardrail Exceptions** table and refine prompt wording before the next run.
 
 Report sections:
 1. Executive Summary
@@ -207,4 +217,3 @@ Use this section at the **end of every work session** to leave clear continuity 
 3. Mark task checkboxes in `PLAN.md` for any tasks completed this session.
 4. Add one dated note in `PLAN.md` describing key outcome quality and decision taken.
 5. Save both files and run `git diff -- CLAUDE.md PLAN.md` to confirm continuity updates are present.
-
