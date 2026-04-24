@@ -297,6 +297,13 @@ scenario_id: {{scenario.id}}
 [OUTPUT_REQUIREMENTS]
 Return one JSON object that exactly matches the schema in this contract.
 No markdown. No prose outside JSON.
+Mandatory sections must be present in every run output:
+1) confidence_statement
+2) limitation_statement
+3) non_determinism_disclaimer
+4) evidence_inference_simulation_separation_check
+If any mandatory section is missing, mark run_status="failed_guardrail" and log the failure in the Guardrail Exceptions table.
+If deterministic or diagnostic wording appears (for example: "will", "proves", "correct intervention is"), mark run_status="failed_guardrail" and log the failure in the Guardrail Exceptions table.
 === SIMULATION_PROMPT_END ===
 ```
 
@@ -342,9 +349,45 @@ Expected simulation output object schema:
     "coverage_ratio": "number 0..1",
     "overall_confidence": "number 0..1"
   },
-  "limitations": ["string"]
+  "confidence_statement": "string",
+  "limitation_statement": "string",
+  "non_determinism_disclaimer": "string",
+  "evidence_inference_simulation_separation_check": {
+    "evidence_only_claims": ["string"],
+    "inference_claims": ["string"],
+    "simulation_claims": ["string"],
+    "mixing_detected": "boolean",
+    "mixing_notes": ["string"]
+  },
+  "limitations": ["string"],
+  "run_status": "ok|failed_guardrail"
 }
 ```
+
+#### 4) Frozen Artifact: Evaluation Rubric & Guardrail Enforcement
+
+Evaluator rubric scoring (1–5 each) remains:
+- Evidence anchoring
+- Internal consistency
+- Plausibility
+- Intervention usefulness
+- Uncertainty quality
+
+**Hard guardrail checks (must pass for a run to be valid):**
+1. Output includes all mandatory sections:
+   - `confidence_statement`
+   - `limitation_statement`
+   - `non_determinism_disclaimer`
+   - `evidence_inference_simulation_separation_check`
+2. Separation check is explicit and complete:
+   - Distinguishes evidence vs inference vs simulation claims.
+   - Flags claim-mixing using `mixing_detected` and `mixing_notes`.
+3. No deterministic or diagnostic wording in narrative, recommendations, or forecasts.
+   - Fail-trigger examples include: `will`, `proves`, `correct intervention is`.
+4. If any hard check fails:
+   - Set `run_status=failed_guardrail`.
+   - Do not count the run toward prompt promotion comparisons.
+   - Add a row to the Guardrail Exceptions table with remediation notes.
 
 #### Contract acceptance criteria
 
@@ -543,6 +586,14 @@ Record one row **for each completed simulation trial**.
 | RunID | Dataset Used | Scenario ID/Type | Prompt Version Key | Model/Version | Evidence Anchoring (1–5) | Internal Consistency (1–5) | Plausibility (1–5) | Intervention Usefulness (1–5) | Uncertainty Quality (1–5) | Rubric Avg | Key Outcome Quality Notes | Comparable Baseline? | Decision Taken |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ |
+
+## Guardrail Exceptions
+
+Record one row for each run with `run_status=failed_guardrail` to support prompt refinement.
+
+| Date | RunID | Prompt Version Key | Failed Check(s) | Trigger Phrase / Missing Section | Action Taken | Prompt Refinement Note |
+|---|---|---|---|---|---|---|
+| _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ |
 
 ### End-of-Session Update Checklist (<= 5 minutes)
 
