@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Gate A workbook builder for the Group Dynamics Simulator.
+Gate A/B workbook builder for the Group Dynamics Simulator.
 
-Creates an Excel workbook (.xlsx) with all Gate A tabs, pre-filled with
-the 5-person Alpha Leadership Team synthetic dataset defined in PLAN.md.
+Creates an Excel workbook (.xlsx) with Gate A and Gate B tabs, pre-filled
+with the 5-person Alpha Leadership Team synthetic dataset defined in PLAN.md.
 
 Run:   python3 scripts/build_workbook.py
 Output: workbook/group-dynamics-simulator-phase1.xlsx
@@ -20,7 +20,7 @@ from openpyxl.workbook.defined_name import DefinedName
 
 # ── Version & date ────────────────────────────────────────────────────────────
 
-VERSION = "phase1_gateA_v1"
+VERSION = "phase1_gateB_v1"
 TODAY   = datetime.date.today().isoformat()
 
 # ── Synthetic dataset ─────────────────────────────────────────────────────────
@@ -109,6 +109,52 @@ VALIDATION_CHECKS = [
     ("GA-16", "Cross-tab",       "PersonID in each assessment tab resolves to valid People!PersonID",         "No NOT FOUND"),
     ("GA-17", "Workbook",        f'Sheet version tag "{VERSION}" present in README-Consent A1',              "Tag present"),
 ]
+
+# Gate B synthetic rows
+REL_METRIC_BASE = {
+    "alex.rivera":  [82, 88, 70, 81, 25, 42, 85, 14, 58, 72],
+    "jordan.chen":  [78, 64, 68, 76, 31, 38, 77, 21, 44, 55],
+    "sam.okafor":   [65, 79, 60, 66, 48, 35, 80, 19, 51, 47],
+    "morgan.kim":   [59, 45, 56, 61, 40, 50, 63, 33, 36, 28],
+    "casey.walsh":  [84, 57, 75, 83, 22, 41, 74, 13, 62, 34],
+}
+
+GROUP_CONTEXT = {
+    "group.id": "alpha-leadership-team",
+    "group.type": "leadership_team",
+    "group.structure": "formal",
+    "group.shared_goals": "Deliver Q3 platform migration while preserving customer trust and team health.",
+    "group.norms.explicit": "Weekly decision sync; written RFCs for material changes; blameless retrospectives.",
+    "group.norms.implicit": "Defer to domain expert in meetings; avoid public disagreement with executive sponsor.",
+    "group.decision_rules": "Consensus-seeking with leader tie-break on deadline-critical calls.",
+    "group.conflict_history": "Two unresolved disputes on resourcing and release scope in previous quarter.",
+    "group.stress_level": 4,
+    "group.role_clarity": 72,
+    "group.cultural_context": "Hybrid US-based team with direct communication norm and high execution urgency.",
+    "group.environmental_constraints": "Fixed launch date, constrained staffing, and elevated executive visibility.",
+}
+
+SCENARIO_CONTEXT = {
+    "scenario.id": "q3-migration-release-risk",
+    "scenario.title": "High-risk launch scope decision",
+    "scenario.type": "decision",
+    "scenario.trigger_event": (
+        "Security testing found late-breaking vulnerabilities in two non-critical modules "
+        "48 hours before launch."
+    ),
+    "scenario.stakes_level": 5,
+    "scenario.emotional_intensity": 4,
+    "scenario.ambiguity_level": 4,
+    "scenario.time_pressure": 5,
+    "scenario.resource_constraints": "No additional engineering headcount can be added before launch date.",
+    "scenario.public_visibility": "TRUE",
+    "scenario.required_decision": "Choose between delaying launch, reducing scope, or shipping with mitigations.",
+    "scenario.success_criteria": "Protect customer trust and security while meeting critical business commitments.",
+    "scenario.failure_consequences": "Customer churn risk, executive escalation, and increased team burnout.",
+    "scenario.known_facts": "- Two modules fail security threshold\n- Core product path passes\n- Communications plan drafted",
+    "scenario.uncertain_facts": "- Exploitability timeline\n- Customer tolerance for delay\n- Vendor patch ETA",
+    "scenario.intervention_options": "- Facilitated decision protocol\n- Rapid risk triage pod\n- Stakeholder expectation reset",
+}
 
 # ── Style constants ───────────────────────────────────────────────────────────
 
@@ -235,7 +281,8 @@ def build_readme(ws):
             "missing — not collected")
     section(13, "Tab guide",
             "People → Big Five → Conflict Style → Psych Safety → Comm-Decision → EQ → Attachment  "
-            "(assessment inputs)  ·  Gate-A-Validation-Log (quality checks)")
+            "(assessment inputs) · Relationship Matrix → Group Context → Scenario Builder → Simulation Config  "
+            "(Gate B inputs)  ·  Gate-A-Validation-Log (quality checks)")
     section(15, "Version log",
             "Edit the table below each session.")
 
@@ -244,7 +291,7 @@ def build_readme(ws):
         _h(ws, 17, col, text)
     _d(ws, 18, 1, TODAY)
     _d(ws, 18, 2, "build_workbook.py")
-    _d(ws, 18, 3, f"Initial workbook generated; version {VERSION}; 5-person synthetic dataset loaded.")
+    _d(ws, 18, 3, f"Workbook generated; version {VERSION}; Gate A + Gate B synthetic dataset loaded.")
 
 
 def build_people(ws):
@@ -518,6 +565,170 @@ def build_validation_log(ws):
     ws.row_dimensions[1].height = 28
 
 
+def build_relationship_matrix(ws):
+    hdrs = [
+        ("FromPersonID", 16),
+        ("ToPersonID", 16),
+        ("Trust", 10),
+        ("Influence", 10),
+        ("Emotional Closeness", 18),
+        ("Respect", 10),
+        ("Conflict Intensity", 16),
+        ("Dependency", 12),
+        ("Comm Frequency", 14),
+        ("Avoidance", 10),
+        ("Alliance", 10),
+        ("Power Differential", 16),
+        ("Health Score", 12),
+        ("Evidence Source", 16),
+        ("Notes", 36),
+    ]
+    for col, (text, width) in enumerate(hdrs, 1):
+        _h(ws, 1, col, text, width)
+
+    row = 2
+    ids = [p["id"] for p in PEOPLE]
+    for from_pid in ids:
+        for to_pid in ids:
+            if from_pid == to_pid:
+                continue
+            _d(ws, row, 1, from_pid)
+            _d(ws, row, 2, to_pid)
+            base = REL_METRIC_BASE[from_pid]
+            adjust = (ids.index(to_pid) - ids.index(from_pid)) * 2
+            values = [max(0, min(100, v + adjust)) for v in base]
+            for col, val in enumerate(values, 3):
+                _d(ws, row, col, val)
+            _f(ws, row, 13, f"=ROUND((C{row}+D{row}+E{row}+F{row}+I{row}+K{row}-(G{row}+J{row}+L{row}))/6,0)")
+            _d(ws, row, 14, "observed")
+            _d(ws, row, 15, "Synthetic Gate B edge seed.")
+            row += 1
+
+    last_row = row - 1
+    ws.cell(row=last_row + 2, column=1, value="NETWORK HEALTH").font = BOLD_FONT
+    _f(ws, last_row + 2, 13, f'=IFERROR(ROUND(AVERAGE(M2:M{last_row}),0),"")')
+
+    _add_dv_int(ws, f"C2:L{last_row}", 0, 100)
+    _add_dv_list(ws, f"N2:N{last_row}", "validated,self_report,observed,inferred,missing")
+    _red_if(ws, f"A2:O{last_row}", "$A2=$B2")
+    _red_if(ws, f"C2:L{last_row}", "OR(C2<0,C2>100)")
+
+
+def build_group_context(ws):
+    ws.column_dimensions["A"].width = 34
+    ws.column_dimensions["B"].width = 95
+    ws.column_dimensions["C"].width = 28
+    _h(ws, 1, 1, "Field")
+    _h(ws, 1, 2, "Value")
+    _h(ws, 1, 3, "Rule")
+
+    rows = [
+        ("group.id", GROUP_CONTEXT["group.id"], "required; slug"),
+        ("group.type", GROUP_CONTEXT["group.type"], "team,leadership_team,project_team,board,other"),
+        ("group.structure", GROUP_CONTEXT["group.structure"], "formal,informal,hybrid"),
+        ("group.shared_goals", GROUP_CONTEXT["group.shared_goals"], "required"),
+        ("group.norms.explicit", GROUP_CONTEXT["group.norms.explicit"], "optional"),
+        ("group.norms.implicit", GROUP_CONTEXT["group.norms.implicit"], "optional"),
+        ("group.psychological_safety_aggregate", '=IFERROR(ROUND(AVERAGE(\'Psych Safety\'!I3:I7),0),"")', "computed read-only"),
+        ("group.decision_rules", GROUP_CONTEXT["group.decision_rules"], "optional"),
+        ("group.conflict_history", GROUP_CONTEXT["group.conflict_history"], "optional"),
+        ("group.stress_level", GROUP_CONTEXT["group.stress_level"], "required 1..5"),
+        ("group.role_clarity", GROUP_CONTEXT["group.role_clarity"], "optional 0..100"),
+        ("group.cultural_context", GROUP_CONTEXT["group.cultural_context"], "optional"),
+        ("group.environmental_constraints", GROUP_CONTEXT["group.environmental_constraints"], "optional"),
+    ]
+
+    for r, (field, value, rule) in enumerate(rows, start=2):
+        _d(ws, r, 1, field)
+        if isinstance(value, str) and value.startswith("="):
+            _f(ws, r, 2, value)
+        else:
+            _d(ws, r, 2, value)
+        _d(ws, r, 3, rule)
+
+    _add_dv_list(ws, "B3:B3", "team,leadership_team,project_team,board,other")
+    _add_dv_list(ws, "B4:B4", "formal,informal,hybrid")
+    _add_dv_int(ws, "B11:B11", 1, 5)
+    _add_dv_int(ws, "B12:B12", 0, 100)
+
+
+def build_scenario_builder(ws):
+    ws.column_dimensions["A"].width = 34
+    ws.column_dimensions["B"].width = 110
+    ws.column_dimensions["C"].width = 30
+    _h(ws, 1, 1, "Field")
+    _h(ws, 1, 2, "Value")
+    _h(ws, 1, 3, "Rule")
+
+    rows = [
+        ("scenario.id", SCENARIO_CONTEXT["scenario.id"], "required; slug"),
+        ("scenario.title", SCENARIO_CONTEXT["scenario.title"], "required"),
+        ("scenario.type", SCENARIO_CONTEXT["scenario.type"], "conflict,decision,change,crisis,performance,other"),
+        ("scenario.trigger_event", SCENARIO_CONTEXT["scenario.trigger_event"], "required"),
+        ("scenario.stakes_level", SCENARIO_CONTEXT["scenario.stakes_level"], "required 1..5"),
+        ("scenario.emotional_intensity", SCENARIO_CONTEXT["scenario.emotional_intensity"], "required 1..5"),
+        ("scenario.ambiguity_level", SCENARIO_CONTEXT["scenario.ambiguity_level"], "required 1..5"),
+        ("scenario.time_pressure", SCENARIO_CONTEXT["scenario.time_pressure"], "required 1..5"),
+        ("scenario.resource_constraints", SCENARIO_CONTEXT["scenario.resource_constraints"], "optional"),
+        ("scenario.public_visibility", SCENARIO_CONTEXT["scenario.public_visibility"], "TRUE,FALSE"),
+        ("scenario.required_decision", SCENARIO_CONTEXT["scenario.required_decision"], "required"),
+        ("scenario.success_criteria", SCENARIO_CONTEXT["scenario.success_criteria"], "required"),
+        ("scenario.failure_consequences", SCENARIO_CONTEXT["scenario.failure_consequences"], "required"),
+        ("scenario.known_facts", SCENARIO_CONTEXT["scenario.known_facts"], "optional newline list"),
+        ("scenario.uncertain_facts", SCENARIO_CONTEXT["scenario.uncertain_facts"], "optional newline list"),
+        ("scenario.intervention_options", SCENARIO_CONTEXT["scenario.intervention_options"], "optional newline list"),
+    ]
+
+    for r, (field, value, rule) in enumerate(rows, start=2):
+        _d(ws, r, 1, field)
+        _d(ws, r, 2, value)
+        _d(ws, r, 3, rule)
+
+    _add_dv_list(ws, "B4:B4", "conflict,decision,change,crisis,performance,other")
+    _add_dv_int(ws, "B6:B9", 1, 5)
+    _add_dv_list(ws, "B11:B11", "TRUE,FALSE")
+
+
+def build_simulation_config(ws):
+    ws.column_dimensions["A"].width = 32
+    ws.column_dimensions["B"].width = 44
+    ws.column_dimensions["C"].width = 36
+    _h(ws, 1, 1, "Field")
+    _h(ws, 1, 2, "Value")
+    _h(ws, 1, 3, "Rule")
+
+    run_id_formula = '=LOWER(TEXT(NOW(),"yyyymmdd-hhmmss")&"-gds")'
+    rows = [
+        ("sim.run_id", run_id_formula, "required, unique (timestamp suffix)"),
+        ("sim.prompt_version_key", "P1.0", "required regex P<major>.<minor>"),
+        ("sim.passes", 3, "1..10"),
+        ("sim.randomness", "medium", "low,medium,high"),
+        ("sim.depth", "standard", "surface,standard,deep"),
+        ("sim.dialogue_enabled", "TRUE", "TRUE,FALSE"),
+        ("sim.report_detail_level", "standard", "summary,standard,full"),
+        ("sim.intervention_mode", "baseline", "baseline,compare"),
+        ("sim.evidence_strictness", "strict", "strict,moderate,lenient"),
+        ("sim.guardrail_verbosity", "standard", "minimal,standard,verbose"),
+    ]
+
+    for r, (field, value, rule) in enumerate(rows, start=2):
+        _d(ws, r, 1, field)
+        if isinstance(value, str) and value.startswith("="):
+            _f(ws, r, 2, value)
+        else:
+            _d(ws, r, 2, value)
+        _d(ws, r, 3, rule)
+
+    _add_dv_int(ws, "B4:B4", 1, 10)
+    _add_dv_list(ws, "B5:B5", "low,medium,high")
+    _add_dv_list(ws, "B6:B6", "surface,standard,deep")
+    _add_dv_list(ws, "B7:B7", "TRUE,FALSE")
+    _add_dv_list(ws, "B8:B8", "summary,standard,full")
+    _add_dv_list(ws, "B9:B9", "baseline,compare")
+    _add_dv_list(ws, "B10:B10", "strict,moderate,lenient")
+    _add_dv_list(ws, "B11:B11", "minimal,standard,verbose")
+
+
 # ── Workbook assembly ─────────────────────────────────────────────────────────
 
 TAB_ORDER = [
@@ -529,6 +740,10 @@ TAB_ORDER = [
     ("Comm-Decision",         build_comm_decision),
     ("EQ",                    build_eq),
     ("Attachment",            build_attachment),
+    ("Relationship Matrix",   build_relationship_matrix),
+    ("Group Context",         build_group_context),
+    ("Scenario Builder",      build_scenario_builder),
+    ("Simulation Config",     build_simulation_config),
     ("Gate-A-Validation-Log", build_validation_log),
 ]
 
@@ -541,6 +756,10 @@ TAB_COLORS = {
     "Comm-Decision":         "7030A0",
     "EQ":                    "4BACC6",
     "Attachment":            "9C6500",
+    "Relationship Matrix":   "C00000",
+    "Group Context":         "1D6F42",
+    "Scenario Builder":      "7F6000",
+    "Simulation Config":     "5B9BD5",
     "Gate-A-Validation-Log": "404040",
 }
 

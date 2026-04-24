@@ -672,15 +672,15 @@ Use this checklist to confirm Gate A is complete before beginning Gate B.
 - [x] **Attachment Tendencies tab**: 4 tendencies, Attach_Sum + Sum_Valid, evidence source — `scripts/build_workbook.py`
 
 #### 1.4 — Spreadsheet Build: Relationship Matrix
-- [ ] **Relationship Matrix tab**: Auto-populated person list from People tab. Directed pairwise fields: trust, influence, emotional closeness, respect, conflict intensity, dependency, communication frequency, avoidance, alliance/coalition, power differential. Evidence source per pair. Notes field.
-- [ ] Add formula to compute aggregate relationship health score per pair and overall network health
+- [x] **Relationship Matrix tab**: Auto-populated person list from People tab. Directed pairwise fields: trust, influence, emotional closeness, respect, conflict intensity, dependency, communication frequency, avoidance, alliance/coalition, power differential. Evidence source per pair. Notes field. — `scripts/build_workbook.py`
+- [x] Add formula to compute aggregate relationship health score per pair and overall network health — `scripts/build_workbook.py`
 
 #### 1.5 — Spreadsheet Build: Group and Scenario
-- [ ] **Group Context tab**: Group type, formal/informal structure, shared goals, explicit/implicit norms, psychological safety aggregate, decision rules, conflict/cohesion history, current stress level, role clarity, cultural context, environmental constraints
-- [ ] **Scenario Builder tab**: Title, type, triggering event description, stakes level (1–5), emotional intensity (1–5), ambiguity level (1–5), time pressure (1–5), resource constraints, public visibility flag, required decision description, success criteria, failure consequences, known facts list, uncertain facts list, intervention options to test
+- [x] **Group Context tab**: Group type, formal/informal structure, shared goals, explicit/implicit norms, psychological safety aggregate, decision rules, conflict/cohesion history, current stress level, role clarity, cultural context, environmental constraints — `scripts/build_workbook.py`
+- [x] **Scenario Builder tab**: Title, type, triggering event description, stakes level (1–5), emotional intensity (1–5), ambiguity level (1–5), time pressure (1–5), resource constraints, public visibility flag, required decision description, success criteria, failure consequences, known facts list, uncertain facts list, intervention options to test — `scripts/build_workbook.py`
 
 #### 1.6 — Spreadsheet Build: Simulation Config
-- [ ] **Simulation Config tab**: Number of passes (1–10), randomness setting (Low/Medium/High), simulation depth (Surface/Standard/Deep), dialogue enabled (Y/N), report detail level (Summary/Standard/Full), intervention testing mode (Baseline/Compare), source evidence strictness (Strict/Moderate/Lenient), guardrail verbosity (Minimal/Standard/Verbose), and required prompt version key (`P<major>.<minor>`)
+- [x] **Simulation Config tab**: Number of passes (1–10), randomness setting (Low/Medium/High), simulation depth (Surface/Standard/Deep), dialogue enabled (Y/N), report detail level (Summary/Standard/Full), intervention testing mode (Baseline/Compare), source evidence strictness (Strict/Moderate/Lenient), guardrail verbosity (Minimal/Standard/Verbose), and required prompt version key (`P<major>.<minor>`) — `scripts/build_workbook.py`
 
 #### 1.7 — Spreadsheet Build: Profile Output & Prompt Generation
 - [ ] **Structured Profile Output tab**: Computed summary view pulling from all assessment tabs. Formatted for human review. Shows: person name, role, OCEAN summary (high/medium/low per trait), dominant conflict mode, primary communication patterns, decision style summary, EQ summary, attachment tendency, key motivations/values/triggers. Confidence rating per section. Missing data flags.

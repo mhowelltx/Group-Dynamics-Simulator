@@ -193,15 +193,15 @@ When starting a new session on this project:
 
 Use this section at the **end of every work session** to leave clear continuity for the next session.
 
-- **Current milestone**: Gate A — open workbook in Excel/Google Sheets, run the 17 validation checks, fill in the Gate-A-Validation-Log tab, and confirm all checks = Pass.
-- **Last completed task ID**: 1.3 (all Gate A tabs built and pre-populated via `scripts/build_workbook.py`; workbook at `workbook/group-dynamics-simulator-phase1.xlsx`)
+- **Current milestone**: Gate B — Relationship Matrix + Group Context + Scenario Builder + Simulation Config tabs implemented in workbook build script; pending manual integration validation in Excel/Google Sheets.
+- **Last completed task ID**: 1.6 (Gate B tabs added and pre-populated via `scripts/build_workbook.py`; workbook at `workbook/group-dynamics-simulator-phase1.xlsx`)
 - **Next 3 concrete tasks**:
-  1. Open `workbook/group-dynamics-simulator-phase1.xlsx` and manually run the 17 Gate A validation checks; fill in `Gate-A-Validation-Log` tab with Pass/Fail/Actual per check.
-  2. Resolve any Fail checks (formula bugs, data errors) and re-run affected checks until all 17 = Pass.
-  3. Once Gate A DoD is confirmed, build Gate B tabs (Relationship Matrix, Group Context, Scenario Builder, Simulation Config) using `scripts/build_workbook.py` — add new tab builders following the same pattern.
+  1. Open `workbook/group-dynamics-simulator-phase1.xlsx` and run Gate B integration checks: relationship self-link rejection, range validations, enum validations, and network/group/scenario/config formulas.
+  2. Fill Gate-A-Validation-Log plus a Gate B run note in `PLAN.md` confirming integrated Gate A+B contract checks pass.
+  3. Begin Gate C prompt-assembly tab implementation once Gate B DoD evidence is captured.
 - **Known blockers**:
-  - Gate A DoD not yet confirmed — requires manual workbook review (open the .xlsx, check formulas evaluate correctly, confirm conditional formatting fires on bad data).
-  - Gate B blocked until Gate A validation log shows all 17 checks = Pass.
+  - Manual workbook validation still required (open the .xlsx, check formulas evaluate correctly, confirm conditional formatting fires on bad data).
+  - Gate C blocked until Gate B integrated validation evidence is recorded.
 - **Open decisions with owner/date**:
 
 | Decision | Owner | Target date | Status |
