@@ -178,3 +178,33 @@ When starting a new session on this project:
 - All outputs must include limitation and ethics warnings
 - Family-system modeling is Phase 2+ — Phase 1 focuses on organizational teams
 - No automated assessment administration in Phase 1
+
+## Session Handoff
+
+Use this section at the **end of every work session** to leave clear continuity for the next session.
+
+- **Current milestone**: Phase 1 spreadsheet prototype contract execution (first full synthetic run without manual prompt edits)
+- **Last completed task ID**: 1.1 (design and specification foundation locked via Phase 1 contract artifacts in `PLAN.md`)
+- **Next 3 concrete tasks**:
+  1. Build tab skeletons for 1.2 (`People`, `README/Consent`) with data validation and stable IDs.
+  2. Implement 1.3 assessment tabs with normalization formulas and evidence-source dropdowns.
+  3. Implement 1.7 prompt assembler to emit exact `phase1_contract_v1` prompt block.
+- **Known blockers**:
+  - Spreadsheet platform decision still open (Google Sheets vs Excel) impacts formula syntax and sharing workflow.
+  - No committed sample workbook yet, so contract acceptance run cannot start.
+- **Open decisions with owner/date**:
+
+| Decision | Owner | Target date | Status |
+|---|---|---|---|
+| Choose spreadsheet platform (Google Sheets vs Excel) | Project owner | 2026-04-26 | Open |
+| Choose prompt packaging format default (JSON-heavy vs hybrid narrative+JSON) | Project owner | 2026-04-27 | Open |
+| Choose confidence representation default (categorical vs numeric-visible) | Project owner | 2026-04-27 | Open |
+
+### End-of-Session Update Checklist (<= 5 minutes)
+
+1. Update `CLAUDE.md` Session Handoff fields (milestone, last completed task, next 3 tasks, blockers, open decisions).
+2. Update `PLAN.md` Run Ledger with any simulation trials completed this session.
+3. Mark task checkboxes in `PLAN.md` for any tasks completed this session.
+4. Add one dated note in `PLAN.md` describing key outcome quality and decision taken.
+5. Save both files and run `git diff -- CLAUDE.md PLAN.md` to confirm continuity updates are present.
+

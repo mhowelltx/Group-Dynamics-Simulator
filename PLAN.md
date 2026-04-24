@@ -403,6 +403,23 @@ Expected simulation output object schema:
 - [ ] Exportable research notes
 - [ ] Framework comparison mode (run same scenario with different psychological frameworks)
 
+
+## Run Ledger
+
+Record one row **for each completed simulation trial**.
+
+| RunID | Dataset Used | Prompt Version | Model/Version | Key Outcome Quality Notes | Decision Taken |
+|---|---|---|---|---|---|
+| _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ |
+
+### End-of-Session Update Checklist (<= 5 minutes)
+
+1. Add/complete Run Ledger rows for all trials finished this session.
+2. Ensure each row includes: dataset, prompt version, model/version, quality notes, and explicit decision.
+3. Update relevant Phase task checkboxes based on what was completed.
+4. Add/refresh any blockers or open questions created by the trial outcomes.
+5. Confirm `CLAUDE.md` Session Handoff was updated in the same session.
+
 ---
 
 ## Decisions Log
