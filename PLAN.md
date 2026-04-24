@@ -30,6 +30,212 @@
 
 **Success criteria**: Run at least one complete end-to-end simulation using the spreadsheet — entering real or test data, generating a prompt, running it in Claude, and producing a coherent report. Iterate on the prompt design until outputs are consistently well-formed and evidence-anchored.
 
+### Phase 1 Prototype Contract
+
+This subsection defines the **frozen Phase 1 contract artifacts**. These artifacts are locked interfaces for the spreadsheet prototype and must not change without an explicit contract revision entry in this file.
+
+#### 1) Frozen Artifact: Field Dictionary
+
+Every field uses a stable ID so it can map directly to Phase 2 database columns and API payloads.
+
+| Stable ID | Tab | Type | Allowed values | Validation rule |
+|-----------|-----|------|----------------|-----------------|
+| `person.id` | People | string | slug/UUID-like identifier | Required; unique across People tab; regex `^[a-z0-9._-]{3,64}$` |
+| `person.display_name` | People | string | free text | Required; 1–120 chars |
+| `person.role` | People | enum | `leader`, `manager`, `ic`, `advisor`, `observer`, `other` | Required |
+| `person.group_membership` | People | string | free text | Required; 1–120 chars |
+| `person.authority_level` | People | integer | `1..5` | Required; integer only |
+| `person.is_active` | People | boolean | `true`, `false` | Required |
+| `person.ocean.openness` | Big Five | integer | `0..100` | Required if person active; integer only |
+| `person.ocean.conscientiousness` | Big Five | integer | `0..100` | Required if person active; integer only |
+| `person.ocean.extraversion` | Big Five | integer | `0..100` | Required if person active; integer only |
+| `person.ocean.agreeableness` | Big Five | integer | `0..100` | Required if person active; integer only |
+| `person.ocean.neuroticism` | Big Five | integer | `0..100` | Required if person active; integer only |
+| `person.conflict.competing` | Conflict Style | integer | `0..100` | Required; person’s five conflict values must sum to `100 ± 1` |
+| `person.conflict.collaborating` | Conflict Style | integer | `0..100` | Required; person’s five conflict values must sum to `100 ± 1` |
+| `person.conflict.compromising` | Conflict Style | integer | `0..100` | Required; person’s five conflict values must sum to `100 ± 1` |
+| `person.conflict.avoiding` | Conflict Style | integer | `0..100` | Required; person’s five conflict values must sum to `100 ± 1` |
+| `person.conflict.accommodating` | Conflict Style | integer | `0..100` | Required; person’s five conflict values must sum to `100 ± 1` |
+| `person.psych_safety.item_1` | Psychological Safety | integer | `1..5` | Required for surveyed person |
+| `person.psych_safety.item_2` | Psychological Safety | integer | `1..5` | Required for surveyed person |
+| `person.psych_safety.item_3` | Psychological Safety | integer | `1..5` | Required for surveyed person |
+| `person.psych_safety.item_4` | Psychological Safety | integer | `1..5` | Required for surveyed person |
+| `person.psych_safety.item_5` | Psychological Safety | integer | `1..5` | Required for surveyed person |
+| `person.psych_safety.item_6` | Psychological Safety | integer | `1..5` | Required for surveyed person |
+| `person.psych_safety.item_7` | Psychological Safety | integer | `1..5` | Required for surveyed person |
+| `person.comm.directness` | Communication & Decision | integer | `0..100` | Optional but bounded integer |
+| `person.comm.context_orientation` | Communication & Decision | integer | `0..100` | `0=low-context`, `100=high-context`; bounded integer |
+| `person.comm.verbal_dominance` | Communication & Decision | integer | `0..100` | Optional but bounded integer |
+| `person.comm.listening_quality` | Communication & Decision | integer | `0..100` | Optional but bounded integer |
+| `person.comm.feedback_tolerance` | Communication & Decision | integer | `0..100` | Optional but bounded integer |
+| `person.decision.analytical_vs_intuitive` | Communication & Decision | integer | `0..100` | `0=intuitive`, `100=analytical`; bounded integer |
+| `person.decision.risk_appetite` | Communication & Decision | integer | `0..100` | Optional but bounded integer |
+| `person.decision.speed` | Communication & Decision | integer | `0..100` | Optional but bounded integer |
+| `person.decision.ambiguity_tolerance` | Communication & Decision | integer | `0..100` | Optional but bounded integer |
+| `person.eq.perceiving` | Emotional Intelligence | integer | `0..100` | Optional but bounded integer |
+| `person.eq.using` | Emotional Intelligence | integer | `0..100` | Optional but bounded integer |
+| `person.eq.understanding` | Emotional Intelligence | integer | `0..100` | Optional but bounded integer |
+| `person.eq.managing` | Emotional Intelligence | integer | `0..100` | Optional but bounded integer |
+| `person.attachment.secure` | Attachment Tendencies | integer | `0..100` | Optional; secure+anxious+avoidant+fearful should sum to `100 ± 1` when all present |
+| `person.attachment.anxious` | Attachment Tendencies | integer | `0..100` | Optional; secure+anxious+avoidant+fearful should sum to `100 ± 1` when all present |
+| `person.attachment.avoidant` | Attachment Tendencies | integer | `0..100` | Optional; secure+anxious+avoidant+fearful should sum to `100 ± 1` when all present |
+| `person.attachment.fearful` | Attachment Tendencies | integer | `0..100` | Optional; secure+anxious+avoidant+fearful should sum to `100 ± 1` when all present |
+| `rel.from_person_id` | Relationship Matrix | string | must exist in `person.id` | Required |
+| `rel.to_person_id` | Relationship Matrix | string | must exist in `person.id` | Required; cannot equal `rel.from_person_id` |
+| `rel.trust` | Relationship Matrix | integer | `0..100` | Optional but bounded integer |
+| `rel.influence` | Relationship Matrix | integer | `0..100` | Optional but bounded integer |
+| `rel.emotional_closeness` | Relationship Matrix | integer | `0..100` | Optional but bounded integer |
+| `rel.respect` | Relationship Matrix | integer | `0..100` | Optional but bounded integer |
+| `rel.conflict_intensity` | Relationship Matrix | integer | `0..100` | Optional but bounded integer |
+| `rel.dependency` | Relationship Matrix | integer | `0..100` | Optional but bounded integer |
+| `rel.communication_frequency` | Relationship Matrix | integer | `0..100` | Optional but bounded integer |
+| `rel.avoidance` | Relationship Matrix | integer | `0..100` | Optional but bounded integer |
+| `rel.alliance` | Relationship Matrix | integer | `0..100` | Optional but bounded integer |
+| `rel.power_differential` | Relationship Matrix | integer | `0..100` | Optional but bounded integer |
+| `rel.evidence_source` | Relationship Matrix | enum | `validated`, `self_report`, `observed`, `inferred`, `missing` | Required per pair |
+| `rel.notes` | Relationship Matrix | string | free text | Optional; max 500 chars |
+| `group.id` | Group Context | string | slug/UUID-like identifier | Required; unique |
+| `group.type` | Group Context | enum | `team`, `leadership_team`, `project_team`, `board`, `other` | Required |
+| `group.structure` | Group Context | enum | `formal`, `informal`, `hybrid` | Required |
+| `group.shared_goals` | Group Context | string | free text | Required; 1–1000 chars |
+| `group.norms.explicit` | Group Context | string | free text | Optional |
+| `group.norms.implicit` | Group Context | string | free text | Optional |
+| `group.psychological_safety_aggregate` | Group Context | integer | `0..100` | Computed; read-only |
+| `group.decision_rules` | Group Context | string | free text | Optional |
+| `group.conflict_history` | Group Context | string | free text | Optional |
+| `group.stress_level` | Group Context | integer | `1..5` | Required |
+| `group.role_clarity` | Group Context | integer | `0..100` | Optional but bounded integer |
+| `group.cultural_context` | Group Context | string | free text | Optional |
+| `group.environmental_constraints` | Group Context | string | free text | Optional |
+| `scenario.id` | Scenario Builder | string | slug/UUID-like identifier | Required; unique |
+| `scenario.title` | Scenario Builder | string | free text | Required; 1–200 chars |
+| `scenario.type` | Scenario Builder | enum | `conflict`, `decision`, `change`, `crisis`, `performance`, `other` | Required |
+| `scenario.trigger_event` | Scenario Builder | string | free text | Required; 1–2000 chars |
+| `scenario.stakes_level` | Scenario Builder | integer | `1..5` | Required |
+| `scenario.emotional_intensity` | Scenario Builder | integer | `1..5` | Required |
+| `scenario.ambiguity_level` | Scenario Builder | integer | `1..5` | Required |
+| `scenario.time_pressure` | Scenario Builder | integer | `1..5` | Required |
+| `scenario.resource_constraints` | Scenario Builder | string | free text | Optional |
+| `scenario.public_visibility` | Scenario Builder | boolean | `true`, `false` | Required |
+| `scenario.required_decision` | Scenario Builder | string | free text | Required |
+| `scenario.success_criteria` | Scenario Builder | string | free text | Required |
+| `scenario.failure_consequences` | Scenario Builder | string | free text | Required |
+| `scenario.known_facts` | Scenario Builder | list[string] | newline-delimited text list | Optional |
+| `scenario.uncertain_facts` | Scenario Builder | list[string] | newline-delimited text list | Optional |
+| `scenario.intervention_options` | Scenario Builder | list[string] | newline-delimited text list | Optional |
+| `sim.run_id` | Simulation Config / Log | string | timestamp + suffix | Required; unique |
+| `sim.passes` | Simulation Config | integer | `1..10` | Required |
+| `sim.randomness` | Simulation Config | enum | `low`, `medium`, `high` | Required |
+| `sim.depth` | Simulation Config | enum | `surface`, `standard`, `deep` | Required |
+| `sim.dialogue_enabled` | Simulation Config | boolean | `true`, `false` | Required |
+| `sim.report_detail_level` | Simulation Config | enum | `summary`, `standard`, `full` | Required |
+| `sim.intervention_mode` | Simulation Config | enum | `baseline`, `compare` | Required |
+| `sim.evidence_strictness` | Simulation Config | enum | `strict`, `moderate`, `lenient` | Required |
+| `sim.guardrail_verbosity` | Simulation Config | enum | `minimal`, `standard`, `verbose` | Required |
+
+#### 2) Frozen Artifact: Scoring Spec
+
+- **Normalization formula (default bounded scale)**:  
+  `normalized_0_100 = ROUND(100 * (raw - raw_min) / (raw_max - raw_min), 0)`  
+  with clamp: `MIN(100, MAX(0, normalized_0_100))`.
+- **Reverse-key formula** (if source instrument has reverse-coded item):  
+  `raw_reversed = raw_max + raw_min - raw`.
+- **Big Five domain score**: average of keyed item raws for the trait, then apply normalization formula to trait raw range.
+- **Psychological safety per-person score**: mean of 7 items (`1..5`) normalized to `0..100`.
+- **Psychological safety group aggregate (`group.psychological_safety_aggregate`)**: mean of available per-person psych safety scores.
+- **Conflict style profile**: if user enters raw mode scores, normalize each mode by total:  
+  `mode_pct = ROUND(100 * mode_raw / SUM(all_5_modes_raw), 0)`; if total = 0, set all modes missing.
+- **Attachment profile**: same proportional normalization as conflict style when raw entries are not already percentages.
+- **Relationship health score (directed pair)**:  
+  `rel.health = ROUND(0.25*rel.trust + 0.20*rel.respect + 0.15*rel.communication_frequency + 0.15*rel.emotional_closeness + 0.10*(100-rel.conflict_intensity) + 0.10*(100-rel.avoidance) + 0.05*(100-rel.power_differential), 0)`.
+- **Missing-data handling**:
+  - Use null/blank for unknown values; never coerce missing to zero.
+  - For computed composites, compute weighted mean over available components only.
+  - If fewer than 60% of required inputs for a composite are present, mark composite as missing and emit a `missing_data_flag=true` marker in output rows.
+  - Include per-field confidence labels (`validated`, `self_report`, `observed`, `inferred`, `missing`) and propagate weakest confidence to each composite summary section.
+
+#### 3) Frozen Artifact: Prompt I/O Spec
+
+Prompt generator must output this exact block structure:
+
+```text
+=== SIMULATION_PROMPT_BEGIN ===
+version: phase1_contract_v1
+run_id: {{sim.run_id}}
+group_id: {{group.id}}
+scenario_id: {{scenario.id}}
+
+[CONFIG]
+{{JSON: sim.* fields by stable ID}}
+
+[PEOPLE]
+{{JSON array: one object per person keyed by stable IDs}}
+
+[RELATIONSHIPS]
+{{JSON array: directed edge objects keyed by rel.* stable IDs}}
+
+[GROUP_CONTEXT]
+{{JSON object keyed by group.* stable IDs}}
+
+[SCENARIO]
+{{JSON object keyed by scenario.* stable IDs}}
+
+[OUTPUT_REQUIREMENTS]
+Return one JSON object that exactly matches the schema in this contract.
+No markdown. No prose outside JSON.
+=== SIMULATION_PROMPT_END ===
+```
+
+Expected simulation output object schema:
+
+```json
+{
+  "run_id": "string",
+  "scenario_id": "string",
+  "generated_at_utc": "ISO-8601 datetime",
+  "outcome_clusters": [
+    {
+      "cluster_id": "string",
+      "label": "string",
+      "probability": "number 0..1",
+      "narrative": "string",
+      "key_drivers": ["stable field IDs or derived factors"],
+      "early_signals": ["string"],
+      "confidence": "number 0..1"
+    }
+  ],
+  "individual_forecasts": [
+    {
+      "person_id": "string",
+      "likely_behaviors": ["string"],
+      "stress_response": "string",
+      "influence_on_others": "string",
+      "confidence": "number 0..1"
+    }
+  ],
+  "interventions": [
+    {
+      "intervention_id": "string",
+      "description": "string",
+      "target_level": "individual|dyad|group|leader",
+      "expected_effect": "string",
+      "risk": "string",
+      "estimated_impact": "number 0..1"
+    }
+  ],
+  "evidence_coverage": {
+    "missing_field_ids": ["string"],
+    "coverage_ratio": "number 0..1",
+    "overall_confidence": "number 0..1"
+  },
+  "limitations": ["string"]
+}
+```
+
+#### Contract acceptance criteria
+
+- Contract considered locked when one full synthetic run executes without manual prompt editing.
+
 ### Phase 1 Tasks
 
 #### 1.1 — Design & Specification
