@@ -410,6 +410,244 @@ Prompt promotion rule: **Only promote to a new prompt version key (`P<major>.<mi
 - If Gate C structure drifts after edits, reopen Gate C and pause Gate D until determinism is restored.
 - Any schema-breaking prompt change requires a new prompt version and explicit note in the decision log.
 
+---
+
+### Gate A — Detailed Execution Plan
+
+**Entry state**: Task 1.1 (design & specification) complete. No spreadsheet workbook exists yet.  
+**Exit state**: All five DoD criteria for Gate A are satisfied; artifacts committed.  
+**Blocking pre-requisite**: Platform decision (Google Sheets vs Excel) must be made before A.0 starts. Recommendation: **Google Sheets** — live formula evaluation, conditional-formatting-based validation indicators, real-time sharing, and no file-save cycle. Use Excel only if offline-first is required.
+
+#### Gate A — Synthetic Team Specification
+
+All Gate A tabs must be validated against this fixed 5-person fictional dataset. Use exactly these values; do not invent variations during Gate A.
+
+**People**
+
+| PersonID | DisplayName | Role | GroupMembership | AuthorityLevel | IsActive |
+|---|---|---|---|---|---|
+| `alex.rivera` | Alex Rivera | `leader` | Alpha Leadership Team | 5 | TRUE |
+| `jordan.chen` | Jordan Chen | `manager` | Alpha Leadership Team | 4 | TRUE |
+| `sam.okafor` | Sam Okafor | `manager` | Alpha Leadership Team | 4 | TRUE |
+| `morgan.kim` | Morgan Kim | `ic` | Alpha Leadership Team | 2 | TRUE |
+| `casey.walsh` | Casey Walsh | `advisor` | Alpha Leadership Team | 3 | TRUE |
+
+**Big Five (OCEAN — direct 0..100 entry)**
+
+| PersonID | Openness | Conscientiousness | Extraversion | Agreeableness | Neuroticism | Evidence Source |
+|---|---|---|---|---|---|---|
+| `alex.rivera` | 72 | 81 | 78 | 58 | 35 | `self_report` |
+| `jordan.chen` | 65 | 88 | 52 | 71 | 42 | `self_report` |
+| `sam.okafor` | 61 | 74 | 90 | 68 | 38 | `self_report` |
+| `morgan.kim` | 79 | 77 | 41 | 65 | 55 | `self_report` |
+| `casey.walsh` | 83 | 69 | 63 | 76 | 28 | `validated` |
+
+**Conflict Style (five modes must sum to 100)**
+
+| PersonID | Competing | Collaborating | Compromising | Avoiding | Accommodating | Evidence Source |
+|---|---|---|---|---|---|---|
+| `alex.rivera` | 35 | 30 | 20 | 5 | 10 | `observed` |
+| `jordan.chen` | 15 | 45 | 25 | 10 | 5 | `observed` |
+| `sam.okafor` | 40 | 25 | 20 | 5 | 10 | `observed` |
+| `morgan.kim` | 10 | 35 | 25 | 25 | 5 | `self_report` |
+| `casey.walsh` | 10 | 40 | 30 | 5 | 15 | `self_report` |
+
+**Psychological Safety (items 1–7, scale 1..5)**
+
+| PersonID | Item1 | Item2 | Item3 | Item4 | Item5 | Item6 | Item7 | Norm Score (computed) | Evidence Source |
+|---|---|---|---|---|---|---|---|---|---|
+| `alex.rivera` | 4 | 4 | 3 | 4 | 4 | 3 | 3 | 64 | `self_report` |
+| `jordan.chen` | 4 | 4 | 4 | 3 | 4 | 4 | 4 | 71 | `self_report` |
+| `sam.okafor` | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 50 | `self_report` |
+| `morgan.kim` | 2 | 3 | 2 | 2 | 3 | 2 | 3 | 36 | `self_report` |
+| `casey.walsh` | 4 | 5 | 4 | 5 | 4 | 4 | 4 | 82 | `self_report` |
+
+Norm score formula: `ROUND(100 * (AVERAGE(Item1:Item7) - 1) / 4, 0)`. Group aggregate (computed): 61.
+
+**Communication & Decision Style (all 0..100 direct entry)**
+
+| PersonID | Directness | Context Orientation | Verbal Dominance | Listening Quality | Feedback Tolerance | Analytical vs Intuitive | Risk Appetite | Decision Speed | Ambiguity Tolerance | Evidence Source |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `alex.rivera` | 85 | 35 | 78 | 55 | 62 | 55 | 68 | 80 | 60 | `observed` |
+| `jordan.chen` | 72 | 42 | 45 | 78 | 71 | 85 | 42 | 58 | 45 | `observed` |
+| `sam.okafor` | 90 | 28 | 88 | 51 | 58 | 35 | 78 | 88 | 72 | `observed` |
+| `morgan.kim` | 52 | 55 | 30 | 82 | 68 | 88 | 38 | 42 | 52 | `self_report` |
+| `casey.walsh` | 65 | 68 | 55 | 88 | 80 | 62 | 50 | 62 | 75 | `observed` |
+
+**Emotional Intelligence (all 0..100)**
+
+| PersonID | Perceiving | Using | Understanding | Managing | Evidence Source |
+|---|---|---|---|---|---|
+| `alex.rivera` | 68 | 70 | 65 | 72 | `self_report` |
+| `jordan.chen` | 75 | 68 | 78 | 72 | `self_report` |
+| `sam.okafor` | 62 | 72 | 55 | 58 | `self_report` |
+| `morgan.kim` | 78 | 55 | 72 | 60 | `self_report` |
+| `casey.walsh` | 82 | 78 | 80 | 85 | `validated` |
+
+**Attachment Tendencies (optional; all four must sum to 100 when present)**
+
+| PersonID | Secure | Anxious | Avoidant | Fearful | Evidence Source |
+|---|---|---|---|---|---|
+| `alex.rivera` | 55 | 20 | 15 | 10 | `inferred` |
+| `jordan.chen` | 65 | 18 | 12 | 5 | `inferred` |
+| `sam.okafor` | 45 | 30 | 15 | 10 | `inferred` |
+| `morgan.kim` | 40 | 35 | 15 | 10 | `inferred` |
+| `casey.walsh` | 70 | 15 | 10 | 5 | `inferred` |
+
+---
+
+#### Gate A — Sub-tasks
+
+##### A.0 — Platform Decision + Workbook Skeleton
+- [ ] Confirm platform: Google Sheets (recommended) or Excel — log decision in Decisions Log below.
+- [ ] Create new workbook; name it `group-dynamics-simulator-phase1`.
+- [ ] Create tab stubs in this order: `README-Consent`, `People`, `Big Five`, `Conflict Style`, `Psychological Safety`, `Comm-Decision Style`, `EQ`, `Attachment`, `Gate-A-Validation-Log`.
+- [ ] Add a **Metadata** named cell or header row in `README-Consent` with: `sheet_version = phase1_gateA_v1`, `created_date`, `platform`.
+- [ ] Protect formula cells from accidental edits where the platform supports it.
+
+**DoD**: Workbook exists with 9 correctly named tabs; metadata cell present; platform decision logged.
+
+##### A.1 — README/Consent Tab
+- [ ] Section 1 — Project description (2–3 sentences, personal use, non-clinical).
+- [ ] Section 2 — Ethical use reminder: not for hiring, legal, clinical, or multi-tenant use.
+- [ ] Section 3 — Consent note: assessments used with knowledge of subjects or are self-reports.
+- [ ] Section 4 — Evidence source legend: `validated`, `self_report`, `observed`, `inferred`, `missing` with plain-language definitions.
+- [ ] Section 5 — Tab navigation guide: what each tab does, in order.
+- [ ] Section 6 — Version and session log table (columns: date, editor, change description).
+
+**DoD**: README tab readable in isolation; someone unfamiliar with the project can understand purpose, ethical limits, and tab structure without reading other files.
+
+##### A.2 — People Tab
+- [ ] Header row: `PersonID | DisplayName | Role | GroupMembership | AuthorityLevel | IsActive`.
+- [ ] Column B (`PersonID`): data validation — custom formula or note enforcing slug pattern `^[a-z0-9._-]{3,64}$`. Add a helper column `ID_valid` = TRUE/FALSE using a REGEXMATCH (Sheets) or equivalent formula.
+- [ ] Column C (`Role`): dropdown list — `leader, manager, ic, advisor, observer, other`.
+- [ ] Column E (`AuthorityLevel`): integer, between 1 and 5 (data validation: whole number, 1–5).
+- [ ] Column F (`IsActive`): dropdown — `TRUE, FALSE`.
+- [ ] Named range `PersonIDs` pointing to all non-empty PersonID cells (B2:B[N]).
+- [ ] Conditional formatting: highlight any row in red where `ID_valid = FALSE` or required fields are blank.
+- [ ] Enter the 5-person synthetic team from the specification above.
+
+**DoD**: 5-person roster entered; ID_valid = TRUE for all rows; Role, AuthorityLevel, IsActive all pass validation; named range `PersonIDs` resolves correctly.
+
+##### A.3 — Big Five Tab
+- [ ] Layout: one row per person; PersonID pulled via `=IFERROR(People.B2, "")` or equivalent VLOOKUP/IMPORTRANGE pattern so names stay in sync automatically.
+- [ ] Input columns: `O_raw | C_raw | E_raw | A_raw | N_raw` (integer 0..100 per cell).
+- [ ] Data validation per input cell: whole number, 0–100.
+- [ ] Phase 1 note: raw inputs ARE the normalized 0..100 scores (direct entry); no additional formula needed. Label columns accordingly: `Openness (0-100)`, etc.
+- [ ] Evidence source column: dropdown — `validated, self_report, observed, inferred, missing`.
+- [ ] Missing-data flag column: `IF(COUNTA(O_raw:N_raw)<5, TRUE, FALSE)`.
+- [ ] Conditional formatting: red cell for any value outside 0–100.
+- [ ] Enter the Big Five synthetic data.
+
+**DoD**: All 5 persons' OCEAN data entered; no out-of-range values; evidence source set per row; missing-data flag = FALSE for all rows.
+
+##### A.4 — Conflict Style Tab
+- [ ] Layout: one row per person; PersonID auto-populated from People tab.
+- [ ] Input columns: `Competing | Collaborating | Compromising | Avoiding | Accommodating` (integer 0..100 each).
+- [ ] Data validation per cell: whole number, 0–100.
+- [ ] Computed column `Mode_Sum` = `SUM(Competing:Accommodating)`.
+- [ ] Computed column `Sum_Valid` = `IF(ABS(Mode_Sum - 100) <= 1, TRUE, FALSE)`.
+- [ ] Conditional formatting: red row highlight when `Sum_Valid = FALSE`.
+- [ ] Evidence source dropdown column.
+- [ ] Optional proportional-normalization output columns: `Competing_pct = ROUND(100*Competing/Mode_Sum, 0)` etc. — only activate when `Sum_Valid = FALSE` to auto-rescale; otherwise display raw values.
+- [ ] Enter the Conflict Style synthetic data.
+
+**DoD**: All 5 rows entered; Mode_Sum ∈ [99,101] for all rows; Sum_Valid = TRUE for all rows; no validation errors.
+
+##### A.5 — Psychological Safety Tab
+- [ ] Layout: one row per person; PersonID auto-populated.
+- [ ] Input columns: `Item1 | Item2 | Item3 | Item4 | Item5 | Item6 | Item7` (integer 1..5 each).
+- [ ] Data validation: whole number, 1–5.
+- [ ] Computed column `Person_PS_Score = ROUND(100 * (AVERAGE(Item1:Item7) - 1) / 4, 0)`.
+- [ ] Computed cell `Group_PS_Aggregate = ROUND(AVERAGE(all Person_PS_Score cells), 0)` (label clearly; placed below the person rows or in a summary section).
+- [ ] Missing-data flag: `IF(COUNTA(Item1:Item7)<7, TRUE, FALSE)`.
+- [ ] Evidence source dropdown.
+- [ ] Enter the Psych Safety synthetic data.
+
+**DoD**: All 5 rows entered; per-person scores match the specification above (±1 rounding tolerance); Group_PS_Aggregate = 61 (±1); missing-data flag = FALSE for all rows.
+
+##### A.6 — Communication & Decision Style Tab
+- [ ] Layout: one row per person; PersonID auto-populated.
+- [ ] Communication input columns (5): `Directness | Context Orientation | Verbal Dominance | Listening Quality | Feedback Tolerance` (integer 0..100).
+- [ ] Decision input columns (4): `Analytical vs Intuitive | Risk Appetite | Decision Speed | Ambiguity Tolerance` (integer 0..100).
+- [ ] Data validation per cell: whole number, 0–100.
+- [ ] Column annotations: add a comment or label row below headers clarifying polarity where non-obvious (e.g., `Context Orientation: 0=low-context, 100=high-context`; `Analytical vs Intuitive: 0=intuitive, 100=analytical`).
+- [ ] Evidence source dropdown.
+- [ ] Missing-data flag: TRUE if ≥5 of 9 fields are blank for a person.
+- [ ] Enter the Comm/Decision synthetic data.
+
+**DoD**: All 5 rows filled; no out-of-range values; polarity labels present; missing-data flag = FALSE for all rows.
+
+##### A.7 — EQ Tab
+- [ ] Layout: one row per person; PersonID auto-populated.
+- [ ] Input columns: `Perceiving | Using | Understanding | Managing` (integer 0..100).
+- [ ] Data validation: whole number, 0–100.
+- [ ] Computed column `EQ_Composite = ROUND(AVERAGE(Perceiving:Managing), 0)` (with missing-data guard).
+- [ ] Missing-data flag: TRUE if any of the 4 fields is blank.
+- [ ] Evidence source dropdown.
+- [ ] Enter the EQ synthetic data.
+
+**DoD**: All 5 rows filled; EQ_Composite calculated correctly; no out-of-range values; missing-data flag = FALSE for all rows.
+
+##### A.8 — Attachment Tendencies Tab
+- [ ] Layout: one row per person; PersonID auto-populated.
+- [ ] Input columns: `Secure | Anxious | Avoidant | Fearful` (integer 0..100 each).
+- [ ] Data validation: whole number, 0–100.
+- [ ] Computed column `Attach_Sum = SUM(Secure:Fearful)`.
+- [ ] Computed column `Sum_Valid = IF(COUNTA(Secure:Fearful)<4, "incomplete", IF(ABS(Attach_Sum-100)<=1, TRUE, FALSE))`.
+- [ ] Conditional formatting: yellow row when `Sum_Valid = "incomplete"`; red row when `Sum_Valid = FALSE`.
+- [ ] Evidence source dropdown.
+- [ ] Note in tab header: "Attachment is optional in Phase 1. Leave all four blank if not used."
+- [ ] Enter the Attachment synthetic data.
+
+**DoD**: All 5 rows filled; Attach_Sum = 100 for all rows; Sum_Valid = TRUE for all rows.
+
+##### A.9 — Gate A Validation Log Tab
+- [ ] Create a table with columns: `Check ID | Tab | Check Description | Expected | Actual | Pass/Fail | Notes | Date | Reviewer`.
+- [ ] Populate with the following required checks (one row per check):
+
+| Check ID | Tab | Check Description |
+|---|---|---|
+| GA-01 | People | All 5 PersonIDs match slug pattern |
+| GA-02 | People | No duplicate PersonIDs |
+| GA-03 | People | Role values all in allowed enum |
+| GA-04 | People | AuthorityLevel all in 1..5 |
+| GA-05 | Big Five | All OCEAN values in 0..100 |
+| GA-06 | Big Five | No missing-data flags |
+| GA-07 | Conflict | Mode sums all within 99–101 |
+| GA-08 | Conflict | Sum_Valid = TRUE for all 5 rows |
+| GA-09 | Psych Safety | All item values in 1..5 |
+| GA-10 | Psych Safety | Per-person scores match spec (±1) |
+| GA-11 | Psych Safety | Group aggregate = 61 (±1) |
+| GA-12 | Comm/Decision | All values in 0..100 |
+| GA-13 | Comm/Decision | Polarity labels present |
+| GA-14 | EQ | All values in 0..100; composites computed |
+| GA-15 | Attachment | Attach_Sum = 100 for all 5 rows |
+| GA-16 | Cross-tab | PersonID in each assessment tab resolves to a valid People.PersonID |
+| GA-17 | Workbook | Sheet version tag = `phase1_gateA_v1` present |
+
+- [ ] Mark all checks Pass/Fail after data entry.
+- [ ] Resolve all Fail checks before claiming Gate A complete.
+
+**DoD**: All 17 checks marked Pass; no open Fail rows; reviewer name and date filled in.
+
+---
+
+#### Gate A — Definition of Done Checklist
+
+Use this checklist to confirm Gate A is complete before beginning Gate B.
+
+- [ ] **A.DoD.1** — People tab supports stable IDs, role metadata, active flags, and cross-tab lookup references (named range `PersonIDs` resolves).
+- [ ] **A.DoD.2** — Big Five, Conflict Style, Psychological Safety, Communication/Decision, EQ, and optional Attachment tabs are implemented with input constraints from the Phase 1 contract (bounds, sum rules, enums).
+- [ ] **A.DoD.3** — Validation catches required fields, range violations, and profile sum checks (Conflict and Attachment) with clear Pass/Fail indicators visible without formula inspection.
+- [ ] **A.DoD.4** — Normalized/computed per-person outputs (psych safety score, conflict sums, EQ composite) calculate correctly for the full 5-person synthetic dataset without manual intervention.
+- [ ] **A.DoD.5** — No unresolved validation errors remain in the workbook (Gate A Validation Log shows all 17 checks = Pass).
+- [ ] **Artifact: Sheet version tag** `phase1_gateA_v1` present in workbook metadata.
+- [ ] **Artifact: Sample data snapshot** exported (CSV per tab or full XLSX) and filename/location recorded here: `[fill in path or link]`.
+- [ ] **Artifact: Gate A Validation Log** filled in with date, reviewer, all checks Pass.
+
+---
+
 ### Phase 1 Tasks
 
 #### 1.1 — Design & Specification
