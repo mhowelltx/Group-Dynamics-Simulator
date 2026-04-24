@@ -141,6 +141,111 @@ Every field uses a stable ID so it can map directly to Phase 2 database columns 
 | `eval.rubric_average_score` | Simulation Output Log | number | `1.0..5.0` | Computed mean of five rubric scores, rounded to 2 decimals |
 | `eval.rubric_notes` | Simulation Output Log | string | free text | Optional evaluator comments (max 1000 chars) |
 
+#### 1A) Mapping Doc — Spreadsheet ↔ Canonical Model
+
+This section maps spreadsheet inputs/outputs to canonical entities so Phase 2 storage stays minimal and intentional.
+
+**Legend**
+- **Persistence**: `Persisted` means store in canonical DB/API model. `Spreadsheet-only (derived)` means compute in workbook/prompt layer and do not persist as first-class columns.
+- **Nullability**: `Required` = non-null for valid record creation; `Nullable` = may be null when unknown/not collected.
+- **Confidence/evidence metadata rules**:
+  - Every persisted row should carry `evidence_source` (`validated`, `self_report`, `observed`, `inferred`, `missing`).
+  - For composite/aggregated values, propagate weakest contributing evidence source and set `missing_data_flag=true` if required input coverage is <60%.
+  - Maintain per-run lineage using `sim.run_id` + timestamped extraction context.
+
+##### Person
+
+| Spreadsheet tab/field | Canonical entity.column | Data type | Nullability | Persistence | Confidence/evidence metadata rules |
+|---|---|---|---|---|---|
+| People.`person.id` | `Person.id` | string | Required | Persisted | Source defaults to `validated` when ID regex/uniqueness checks pass. |
+| People.`person.display_name` | `Person.display_name` | string | Required | Persisted | Use roster/admin source; do not infer. |
+| People.`person.role` | `Person.role` | enum | Required | Persisted | Must be explicitly entered; inferred role must be labeled `inferred`. |
+| People.`person.group_membership` | `Person.group_membership` | string | Required | Persisted | Tag source as roster vs manual entry. |
+| People.`person.authority_level` | `Person.authority_level` | integer | Required | Persisted | Keep provenance from assessor/roster source. |
+| People.`person.is_active` | `Person.is_active` | boolean | Required | Persisted | Operational/admin source. |
+
+##### AssessmentSnapshot
+
+| Spreadsheet tab/field | Canonical entity.column | Data type | Nullability | Persistence | Confidence/evidence metadata rules |
+|---|---|---|---|---|---|
+| Big Five.* (`person.ocean.*`) | `AssessmentSnapshot.big_five_*` | integer (0..100) | Required for active person | Persisted | `self_report` unless instrument-admin verified (`validated`). |
+| Conflict Style.* (`person.conflict.*`) | `AssessmentSnapshot.conflict_*` | integer (0..100) | Required | Persisted | Enforce sum rule; failed sum blocks `validated` status. |
+| Psychological Safety items (`person.psych_safety.item_1..7`) | `AssessmentSnapshot.psych_safety_item_1..7` | integer (1..5) | Required when surveyed | Persisted | Keep item-level evidence source; default `self_report`. |
+| Communication/Decision.* (`person.comm.*`, `person.decision.*`) | `AssessmentSnapshot.comm_*`, `AssessmentSnapshot.decision_*` | integer (0..100) | Nullable | Persisted | If estimated by coach/facilitator, mark `observed` or `inferred` explicitly. |
+| EQ.* (`person.eq.*`) | `AssessmentSnapshot.eq_*` | integer (0..100) | Nullable | Persisted | Preserve instrument origin in metadata notes. |
+| Attachment.* (`person.attachment.*`) | `AssessmentSnapshot.attachment_*` | integer (0..100) | Nullable | Persisted | If partial profile present, evidence cannot exceed weakest present field. |
+| Computed person psych safety score | `AssessmentSnapshot.psych_safety_score` | integer (0..100) | Nullable | Spreadsheet-only (derived) | Derived from items; propagate weakest item evidence + coverage flag. |
+| Computed normalized trait summaries | `AssessmentSnapshot.normalized_summary_json` | JSON/object | Nullable | Spreadsheet-only (derived) | Prompt-layer artifact; regenerate deterministically, do not persist to avoid bloat. |
+
+##### RelationshipEdge
+
+| Spreadsheet tab/field | Canonical entity.column | Data type | Nullability | Persistence | Confidence/evidence metadata rules |
+|---|---|---|---|---|---|
+| Relationship Matrix.`rel.from_person_id` | `RelationshipEdge.from_person_id` | string (FK) | Required | Persisted | Must resolve to active `Person.id`. |
+| Relationship Matrix.`rel.to_person_id` | `RelationshipEdge.to_person_id` | string (FK) | Required | Persisted | Must resolve; self-edge disallowed. |
+| Relationship metrics (`rel.trust`..`rel.power_differential`) | `RelationshipEdge.*` matching metric names | integer (0..100) | Nullable | Persisted | Metric-level source can differ; aggregate uses weakest source. |
+| Relationship Matrix.`rel.evidence_source` | `RelationshipEdge.evidence_source` | enum | Required | Persisted | Required at edge row level. |
+| Relationship Matrix.`rel.notes` | `RelationshipEdge.notes` | string | Nullable | Persisted | If notes summarize inference, evidence source cannot be `validated`. |
+| Computed relationship health (`rel.health`) | `RelationshipEdge.health_score` | integer (0..100) | Nullable | Spreadsheet-only (derived) | Calculated per scoring spec; not persisted as base column. |
+
+##### GroupContext
+
+| Spreadsheet tab/field | Canonical entity.column | Data type | Nullability | Persistence | Confidence/evidence metadata rules |
+|---|---|---|---|---|---|
+| Group Context.`group.id` | `GroupContext.id` | string | Required | Persisted | `validated` once uniqueness/format checks pass. |
+| Group Context core fields (`group.type`, `group.structure`, `group.shared_goals`, `group.decision_rules`, `group.conflict_history`, `group.stress_level`, etc.) | `GroupContext.*` | mixed (enum/string/int) | Mixed (required/nullable per contract) | Persisted | Mark each field with source: policy docs=`validated`, interview=`observed`/`self_report`. |
+| `group.psychological_safety_aggregate` | `GroupContext.psychological_safety_aggregate` | integer (0..100) | Nullable | Spreadsheet-only (derived) | Aggregate from AssessmentSnapshot items; persist inputs, not aggregate column. |
+
+##### Scenario
+
+| Spreadsheet tab/field | Canonical entity.column | Data type | Nullability | Persistence | Confidence/evidence metadata rules |
+|---|---|---|---|---|---|
+| Scenario Builder.`scenario.id` | `Scenario.id` | string | Required | Persisted | `validated` after ID checks. |
+| Scenario Builder.`scenario.title`, `scenario.type`, `scenario.trigger_event`, `scenario.required_decision`, `scenario.success_criteria`, `scenario.failure_consequences` | `Scenario.*` | string/enum | Required | Persisted | Tag author and source basis (incident log vs hypothetical). |
+| Scenario Builder pressure/stakes fields (`scenario.stakes_level`, `scenario.emotional_intensity`, `scenario.ambiguity_level`, `scenario.time_pressure`) | `Scenario.*` | integer (1..5) | Required | Persisted | If panel-calibrated, can be `validated`; otherwise `inferred`/`observed`. |
+| Scenario Builder optional list fields (`scenario.known_facts`, `scenario.uncertain_facts`, `scenario.intervention_options`) | `Scenario.*` | array<string> | Nullable | Persisted | Keep citation/source note for each list block where possible. |
+
+##### SimulationConfig
+
+| Spreadsheet tab/field | Canonical entity.column | Data type | Nullability | Persistence | Confidence/evidence metadata rules |
+|---|---|---|---|---|---|
+| Simulation Config.`sim.prompt_version_key` | `SimulationConfig.prompt_version_key` | string | Required | Persisted | Treated as configuration provenance anchor. |
+| Simulation Config controls (`sim.passes`, `sim.randomness`, `sim.depth`, `sim.dialogue_enabled`, `sim.report_detail_level`, `sim.intervention_mode`, `sim.evidence_strictness`, `sim.guardrail_verbosity`) | `SimulationConfig.*` | int/enum/bool | Required | Persisted | Config is operational metadata; source is system/user selection (not inferred). |
+
+##### SimulationRun
+
+| Spreadsheet tab/field | Canonical entity.column | Data type | Nullability | Persistence | Confidence/evidence metadata rules |
+|---|---|---|---|---|---|
+| Simulation Config / Log.`sim.run_id` | `SimulationRun.id` | string | Required | Persisted | Unique run lineage key. |
+| Generated runtime timestamp | `SimulationRun.generated_at_utc` | datetime | Required | Persisted | System-generated `validated` metadata. |
+| Foreign keys (`group.id`, `scenario.id`, config ref) | `SimulationRun.group_id`, `SimulationRun.scenario_id`, `SimulationRun.simulation_config_id` | string | Required | Persisted | Referential integrity enforced before run commit. |
+| Prompt block text | `SimulationRun.prompt_payload` | text/json | Nullable | Spreadsheet-only (derived) | Store in logs/artifacts store only if needed; avoid core schema column bloat. |
+
+##### SimulationPass
+
+| Spreadsheet tab/field | Canonical entity.column | Data type | Nullability | Persistence | Confidence/evidence metadata rules |
+|---|---|---|---|---|---|
+| Pass index (implicit from repeated pass outputs) | `SimulationPass.pass_index` | integer | Required | Persisted | Sequential within run; system-generated. |
+| Pass-level model output JSON | `SimulationPass.output_json` | JSON | Required | Persisted | Evidence confidence comes from model output + coverage checks. |
+| Pass-level evidence coverage (`missing_field_ids`, `coverage_ratio`, `overall_confidence`) | `SimulationPass.evidence_coverage_*` | array/number | Required | Persisted | Clamp confidence by weakest upstream source + missingness thresholds. |
+| Intermediate formatting helpers | n/a | n/a | n/a | Spreadsheet-only (derived) | Keep only in workbook formulas; no API/DB fields. |
+
+##### Recommendation
+
+| Spreadsheet tab/field | Canonical entity.column | Data type | Nullability | Persistence | Confidence/evidence metadata rules |
+|---|---|---|---|---|---|
+| Simulation output `interventions[].intervention_id` | `Recommendation.id` | string | Required | Persisted | Stable ID from run output; uniqueness within run. |
+| `interventions[].description` | `Recommendation.description` | string | Required | Persisted | Must map to output evidence; otherwise mark low confidence. |
+| `interventions[].target_level` | `Recommendation.target_level` | enum | Required | Persisted | Controlled enum (`individual`, `dyad`, `group`, `leader`). |
+| `interventions[].expected_effect`, `interventions[].risk` | `Recommendation.expected_effect`, `Recommendation.risk` | string | Required | Persisted | Text must remain linked to run/pass provenance. |
+| `interventions[].estimated_impact` | `Recommendation.estimated_impact` | number (0..1) | Required | Persisted | Down-weight if evidence coverage ratio is low. |
+| Post-hoc priority/rank helper columns | `Recommendation.rank` (optional future) | integer | Nullable | Spreadsheet-only (derived) | Ranking logic should be computed view-level until stable product requirement exists. |
+
+**Schema bloat guardrails**
+- Persist raw inputs, identifiers, run/pass outputs, and recommendation primitives.
+- Keep workbook convenience composites, formatted prompt text blocks, and ad hoc ranking helpers as spreadsheet-only derived artifacts unless repeatedly needed by production queries.
+- Promote a derived field to persisted only after proving cross-run analytical value and stable definition across prompt versions.
+
 #### 2) Frozen Artifact: Scoring Spec
 
 - **Normalization formula (default bounded scale)**:  
