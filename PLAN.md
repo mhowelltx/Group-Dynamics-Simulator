@@ -124,6 +124,7 @@ Every field uses a stable ID so it can map directly to Phase 2 database columns 
 | `scenario.uncertain_facts` | Scenario Builder | list[string] | newline-delimited text list | Optional |
 | `scenario.intervention_options` | Scenario Builder | list[string] | newline-delimited text list | Optional |
 | `sim.run_id` | Simulation Config / Log | string | timestamp + suffix | Required; unique |
+| `sim.prompt_version_key` | Simulation Config / Log | string | semantic prompt key like `P1.0`, `P1.1` | Required; regex `^P[0-9]+\\.[0-9]+$` |
 | `sim.passes` | Simulation Config | integer | `1..10` | Required |
 | `sim.randomness` | Simulation Config | enum | `low`, `medium`, `high` | Required |
 | `sim.depth` | Simulation Config | enum | `surface`, `standard`, `deep` | Required |
@@ -132,6 +133,13 @@ Every field uses a stable ID so it can map directly to Phase 2 database columns 
 | `sim.intervention_mode` | Simulation Config | enum | `baseline`, `compare` | Required |
 | `sim.evidence_strictness` | Simulation Config | enum | `strict`, `moderate`, `lenient` | Required |
 | `sim.guardrail_verbosity` | Simulation Config | enum | `minimal`, `standard`, `verbose` | Required |
+| `eval.evidence_anchoring_score` | Simulation Output Log | integer | `1..5` | Required per run; evaluator rubric score |
+| `eval.internal_consistency_score` | Simulation Output Log | integer | `1..5` | Required per run; evaluator rubric score |
+| `eval.plausibility_score` | Simulation Output Log | integer | `1..5` | Required per run; evaluator rubric score |
+| `eval.intervention_usefulness_score` | Simulation Output Log | integer | `1..5` | Required per run; evaluator rubric score |
+| `eval.uncertainty_quality_score` | Simulation Output Log | integer | `1..5` | Required per run; evaluator rubric score |
+| `eval.rubric_average_score` | Simulation Output Log | number | `1.0..5.0` | Computed mean of five rubric scores, rounded to 2 decimals |
+| `eval.rubric_notes` | Simulation Output Log | string | free text | Optional evaluator comments (max 1000 chars) |
 
 #### 2) Frozen Artifact: Scoring Spec
 
@@ -162,6 +170,7 @@ Prompt generator must output this exact block structure:
 === SIMULATION_PROMPT_BEGIN ===
 version: phase1_contract_v1
 run_id: {{sim.run_id}}
+prompt_version_key: {{sim.prompt_version_key}}
 group_id: {{group.id}}
 scenario_id: {{scenario.id}}
 
@@ -239,13 +248,14 @@ Expected simulation output object schema:
 ### Phase 1 Gate Milestones
 
 Gate sequencing rule: **Gate D is blocked until Gate C has deterministic prompt structure output** (same section order, headings, and key names across repeated exports for unchanged inputs).
+Prompt promotion rule: **Only promote to a new prompt version key (`P<major>.<minor>`) when the candidate prompt improves average evaluator rubric score on at least 3 comparable scenarios versus the current baseline prompt version.**
 
 | Gate | Scope | Definition of Done | Required artifacts |
 |------|-------|--------------------|--------------------|
 | **Gate A — People + Assessments + Validation Rules** | People tab and all per-person assessment tabs, including validation behavior and scoring formulas. | 1) People tab supports stable IDs, role metadata, active flags, and cross-tab lookup references.<br>2) Big Five, Conflict Style, Psychological Safety, Communication/Decision, EQ, and optional Attachment inputs are implemented with input constraints from the Phase 1 contract.<br>3) Validation catches required fields, range violations, and profile sum checks (Conflict and Attachment) with clear fail indicators.<br>4) Normalized/computed per-person outputs calculate without manual intervention for a 5-person synthetic dataset.<br>5) No unresolved validation errors remain in the Gate A sample workbook state. | - **Sheet version tag**: `phase1_gateA_v1` (or incremented patch version).<br>- **Sample data snapshot**: 5-person synthetic roster plus complete per-person assessments exported (CSV/XLSX snapshot).<br>- **Prompt version**: `N/A` (prompt block not yet accepted at this gate).<br>- **Run notes**: Gate A validation log (date, validator name, checks performed, defects found/fixed). |
 | **Gate B — Relationship Matrix + Group/Scenario/Config** | Relationship Matrix, Group Context, Scenario Builder, and Simulation Config tabs with schema compliance. | 1) Directed relationship matrix is fully populated from valid `person.id` values and rejects self-links.<br>2) Relationship composite score formulas and missing-data behavior run per contract.<br>3) Group Context fields and Scenario Builder fields enforce required fields and bounds.<br>4) Simulation Config fields enforce allowed enum/range values and produce a valid `sim.run_id`.<br>5) All Gate A and Gate B tabs pass contract-level validation in one integrated workbook check. | - **Sheet version tag**: `phase1_gateB_v1`.<br>- **Sample data snapshot**: Gate A dataset + complete relationship edges + one fully filled group/scenario/config set.<br>- **Prompt version**: `draft_prompt_v0` (schema-complete but not yet stability-approved).<br>- **Run notes**: Gate B integration checklist with data integrity and validation outcomes. |
 | **Gate C — Prompt Generation Block Stable + Copy/Paste Ready** | Prompt Inputs / output assembly layer, including exact block structure and deterministic formatting. | 1) Generated prompt matches the frozen Prompt I/O section order and heading labels exactly.<br>2) Prompt output is **deterministic in structure**: repeated generations from unchanged data produce identical structure (differences allowed only in fields intentionally time-varying such as `run_id` when regenerated).<br>3) Copy/paste into Claude requires no manual editing for delimiters, headers, JSON boundaries, or required sections.<br>4) Prompt includes all required entities (config, people, relationships, group context, scenario, output requirements) keyed by stable IDs.<br>5) A prompt QA checklist confirms structure validity on at least 3 consecutive exports. | - **Sheet version tag**: `phase1_gateC_v1`.<br>- **Sample data snapshot**: Gate B dataset frozen for prompt regression checks.<br>- **Prompt version**: `phase1_contract_v1_prompt` (or incremented compatible revision).<br>- **Run notes**: Determinism test log showing at least 3 repeated exports and structural comparison results. |
-| **Gate D — End-to-End Validation (5-person synthetic team, >=3 scenario runs)** | Full simulation workflow from data entry to output logging, with quality review over multiple scenarios. | 1) **Entry criterion**: Gate C determinism is confirmed and documented.<br>2) One 5-person synthetic team dataset is run through at least 3 distinct scenario executions (or 3 runs with materially different scenario settings) using the Gate C prompt format.<br>3) Each run is logged with raw output, summarized outcomes, confidence, and limitations in Simulation Output Log.<br>4) Output review confirms structure compliance, evidence anchoring, and useful intervention recommendations across runs.<br>5) Post-run retrospective records prompt or schema refinements and whether Phase 1 contract stays frozen or needs revision. | - **Sheet version tag**: `phase1_gateD_v1`.<br>- **Sample data snapshot**: Final synthetic team workbook and scenario set used for validation.<br>- **Prompt version**: Locked Gate C prompt version identifier used in all runs.<br>- **Run notes**: End-to-end validation report containing at least 3 run records, findings, and change decisions. |
+| **Gate D — End-to-End Validation (5-person synthetic team, >=3 scenario runs)** | Full simulation workflow from data entry to output logging, with quality review over multiple scenarios. | 1) **Entry criterion**: Gate C determinism is confirmed and documented.<br>2) One 5-person synthetic team dataset is run through at least 3 distinct scenario executions (or 3 runs with materially different scenario settings) using the Gate C prompt format.<br>3) Each run is logged with raw output, summarized outcomes, confidence, limitations, `prompt_version_key`, and evaluator rubric scores in Simulation Output Log.<br>4) Output review confirms structure compliance, evidence anchoring, internal consistency, plausibility, uncertainty quality, and useful intervention recommendations across runs.<br>5) Post-run retrospective records prompt or schema refinements and whether Phase 1 contract stays frozen or needs revision.<br>6) Prompt version is promoted only if candidate average rubric score improves on at least 3 comparable scenarios versus baseline. | - **Sheet version tag**: `phase1_gateD_v1`.<br>- **Sample data snapshot**: Final synthetic team workbook and scenario set used for validation.<br>- **Prompt version**: Locked Gate C prompt version identifier used in all runs.<br>- **Run notes**: End-to-end validation report containing at least 3 run records, rubric comparisons, and change decisions. |
 
 **Gate control policy**
 - Do not start Gate D execution tasks until Gate C determinism evidence is present in run notes.
@@ -284,14 +294,14 @@ Gate sequencing rule: **Gate D is blocked until Gate C has deterministic prompt 
 - [ ] **Scenario Builder tab**: Title, type, triggering event description, stakes level (1–5), emotional intensity (1–5), ambiguity level (1–5), time pressure (1–5), resource constraints, public visibility flag, required decision description, success criteria, failure consequences, known facts list, uncertain facts list, intervention options to test
 
 #### 1.6 — Spreadsheet Build: Simulation Config
-- [ ] **Simulation Config tab**: Number of passes (1–10), randomness setting (Low/Medium/High), simulation depth (Surface/Standard/Deep), dialogue enabled (Y/N), report detail level (Summary/Standard/Full), intervention testing mode (Baseline/Compare), source evidence strictness (Strict/Moderate/Lenient), guardrail verbosity (Minimal/Standard/Verbose)
+- [ ] **Simulation Config tab**: Number of passes (1–10), randomness setting (Low/Medium/High), simulation depth (Surface/Standard/Deep), dialogue enabled (Y/N), report detail level (Summary/Standard/Full), intervention testing mode (Baseline/Compare), source evidence strictness (Strict/Moderate/Lenient), guardrail verbosity (Minimal/Standard/Verbose), and required prompt version key (`P<major>.<minor>`)
 
 #### 1.7 — Spreadsheet Build: Profile Output & Prompt Generation
 - [ ] **Structured Profile Output tab**: Computed summary view pulling from all assessment tabs. Formatted for human review. Shows: person name, role, OCEAN summary (high/medium/low per trait), dominant conflict mode, primary communication patterns, decision style summary, EQ summary, attachment tendency, key motivations/values/triggers. Confidence rating per section. Missing data flags.
 - [ ] **Prompt Inputs tab**: Formula-generated prompt block. Assembles system prompt, person profile blocks, relationship data block, group context block, scenario block, config block, and output format instructions. Single cell with full concatenated prompt ready to copy-paste into Claude.
 
 #### 1.8 — Spreadsheet Build: Output Logging
-- [ ] **Simulation Output Log tab**: Table with columns: RunID, Date, ScenarioTitle, PassNumber, RawOutput (paste area), OutcomeClassification, ProbabilityEstimate, ConfidenceEstimate, KeyFindings, Recommendations, LimitationNotes, ReviewedBy. Auto-generate RunID from timestamp.
+- [ ] **Simulation Output Log tab**: Table with columns: RunID, Date, ScenarioTitle, PromptVersionKey, PassNumber, RawOutput (paste area), OutcomeClassification, ProbabilityEstimate, ConfidenceEstimate, KeyFindings, Recommendations, LimitationNotes, ReviewedBy, EvidenceAnchoringScore (1–5), InternalConsistencyScore (1–5), PlausibilityScore (1–5), InterventionUsefulnessScore (1–5), UncertaintyQualityScore (1–5), RubricAverageScore, RubricNotes. Auto-generate RunID from timestamp.
 
 #### 1.9 — Spreadsheet Build: Visuals
 - [ ] **Visuals tab**: Relationship trust heat map (matrix visualization using conditional formatting), Influence map (sorted bar chart), OCEAN radar charts per person, Conflict style stacked bar per person, Outcome cluster distribution chart (manual input from simulation log)
@@ -303,10 +313,11 @@ Gate sequencing rule: **Gate D is blocked until Gate C has deterministic prompt 
 - [ ] Draft Group Context block template
 - [ ] Draft Scenario block template
 - [ ] Draft Output Format instructions block (aligned with Simulation Output Object schema)
-- [ ] Draft Evaluator prompt (consistency, plausibility, evidence alignment check)
+- [ ] Draft Evaluator prompt rubric with numeric scores (1–5) for evidence anchoring, internal consistency, plausibility, intervention usefulness, and uncertainty quality
 - [ ] Test prompt with synthetic team data (3-person team, simple scenario)
 - [ ] Test prompt with realistic team data (5–8 person team, complex scenario)
 - [ ] Iterate until output structure is consistent and evidence-anchored
+- [ ] Only promote prompt version when rubric average improves in at least 3 comparable scenarios
 
 #### 1.11 — End-to-End Validation
 - [ ] Create a sample dataset: fictional 5-person leadership team
@@ -424,14 +435,14 @@ Gate sequencing rule: **Gate D is blocked until Gate C has deterministic prompt 
 
 Record one row **for each completed simulation trial**.
 
-| RunID | Dataset Used | Prompt Version | Model/Version | Key Outcome Quality Notes | Decision Taken |
-|---|---|---|---|---|---|
-| _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ |
+| RunID | Dataset Used | Scenario ID/Type | Prompt Version Key | Model/Version | Evidence Anchoring (1–5) | Internal Consistency (1–5) | Plausibility (1–5) | Intervention Usefulness (1–5) | Uncertainty Quality (1–5) | Rubric Avg | Key Outcome Quality Notes | Comparable Baseline? | Decision Taken |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ |
 
 ### End-of-Session Update Checklist (<= 5 minutes)
 
 1. Add/complete Run Ledger rows for all trials finished this session.
-2. Ensure each row includes: dataset, prompt version, model/version, quality notes, and explicit decision.
+2. Ensure each row includes prompt version key plus all five rubric dimension scores and rubric average.
 3. Update relevant Phase task checkboxes based on what was completed.
 4. Add/refresh any blockers or open questions created by the trial outcomes.
 5. Confirm `CLAUDE.md` Session Handoff was updated in the same session.
