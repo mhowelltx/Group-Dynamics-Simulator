@@ -193,22 +193,22 @@ When starting a new session on this project:
 
 Use this section at the **end of every work session** to leave clear continuity for the next session.
 
-- **Current milestone**: Phase 1 spreadsheet prototype contract execution (first full synthetic run without manual prompt edits)
-- **Last completed task ID**: 1.1 (design and specification foundation locked via Phase 1 contract artifacts in `PLAN.md`)
+- **Current milestone**: Gate A — open workbook in Excel/Google Sheets, run the 17 validation checks, fill in the Gate-A-Validation-Log tab, and confirm all checks = Pass.
+- **Last completed task ID**: 1.3 (all Gate A tabs built and pre-populated via `scripts/build_workbook.py`; workbook at `workbook/group-dynamics-simulator-phase1.xlsx`)
 - **Next 3 concrete tasks**:
-  1. Build tab skeletons for 1.2 (`People`, `README/Consent`) with data validation and stable IDs.
-  2. Implement 1.3 assessment tabs with normalization formulas and evidence-source dropdowns.
-  3. Implement 1.7 prompt assembler to emit exact `phase1_contract_v1` prompt block.
+  1. Open `workbook/group-dynamics-simulator-phase1.xlsx` and manually run the 17 Gate A validation checks; fill in `Gate-A-Validation-Log` tab with Pass/Fail/Actual per check.
+  2. Resolve any Fail checks (formula bugs, data errors) and re-run affected checks until all 17 = Pass.
+  3. Once Gate A DoD is confirmed, build Gate B tabs (Relationship Matrix, Group Context, Scenario Builder, Simulation Config) using `scripts/build_workbook.py` — add new tab builders following the same pattern.
 - **Known blockers**:
-  - Spreadsheet platform decision still open (Google Sheets vs Excel) impacts formula syntax and sharing workflow.
-  - No committed sample workbook yet, so contract acceptance run cannot start.
+  - Gate A DoD not yet confirmed — requires manual workbook review (open the .xlsx, check formulas evaluate correctly, confirm conditional formatting fires on bad data).
+  - Gate B blocked until Gate A validation log shows all 17 checks = Pass.
 - **Open decisions with owner/date**:
 
 | Decision | Owner | Target date | Status |
 |---|---|---|---|
-| Choose spreadsheet platform (Google Sheets vs Excel) | Project owner | 2026-04-26 | Open |
+| Choose spreadsheet platform (Google Sheets vs Excel) | Project owner | 2026-04-26 | **Resolved** — Excel (.xlsx) via build script; import to Google Sheets for sharing if needed |
 | Choose prompt packaging format default (JSON-heavy vs hybrid narrative+JSON) | Project owner | 2026-04-27 | Open |
-| Choose confidence representation default (categorical vs numeric-visible) | Project owner | 2026-04-27 | Open |
+| Choose confidence representation default (categorical vs numeric-visible) | Project owner | 2026-04-27 | **Resolved** — categorical (validated/self_report/observed/inferred/missing) locked in contract |
 
 ### End-of-Session Update Checklist (<= 5 minutes)
 

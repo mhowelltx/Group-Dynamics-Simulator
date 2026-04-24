@@ -654,22 +654,22 @@ Use this checklist to confirm Gate A is complete before beginning Gate B.
 - [x] Read and understand full system design document
 - [x] Create CLAUDE.md session context file
 - [x] Create PLAN.md implementation plan
-- [ ] Define exact field lists and validation rules for each tab (can be done in the spreadsheet itself)
-- [ ] Define the normalized score computation rules (raw → 0–100 scale per domain)
-- [ ] Define the confidence rating system (1–5 or categorical: Validated / Self-report / Observed / Inferred / Missing)
+- [x] Define exact field lists and validation rules for each tab — locked in Phase 1 contract Field Dictionary
+- [x] Define the normalized score computation rules — locked in Phase 1 contract Scoring Spec
+- [x] Define the confidence rating system — categorical (validated/self_report/observed/inferred/missing), locked in contract
 
 #### 1.2 — Spreadsheet Build: People and Roles
-- [ ] Create People tab with columns: PersonID, DisplayName, Role, GroupMembership, AuthorityLevel, IsActive
-- [ ] Create named range or dropdown for PersonID cross-referencing in other tabs
-- [ ] Add README/Consent tab with instructions and ethical notes
+- [x] Create People tab with columns: PersonID, DisplayName, Role, GroupMembership, AuthorityLevel, IsActive — `scripts/build_workbook.py`
+- [x] Create named range `PersonIDs` for PersonID cross-referencing in other tabs — `scripts/build_workbook.py`
+- [x] Add README/Consent tab with instructions and ethical notes — `scripts/build_workbook.py`
 
 #### 1.3 — Spreadsheet Build: Assessment Tabs
-- [ ] **Big Five tab**: One block per person (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism). Raw score → normalized 0–100. Evidence source dropdown. Confidence rating.
-- [ ] **Conflict Style tab**: Five-mode profile per person (Competing, Collaborating, Compromising, Avoiding, Accommodating). Normalized weights. Evidence source.
-- [ ] **Psychological Safety tab**: Edmondson 7-item team survey. Per-person and group aggregate. Evidence source.
-- [ ] **Communication & Decision Style tab**: Direct/indirect, high/low-context, verbal dominance, listening quality, feedback tolerance, analytical vs. intuitive, risk appetite, decision speed, ambiguity tolerance. Evidence source.
-- [ ] **Emotional Intelligence tab**: Perceiving, using, understanding, managing emotions. Self-report + observation fields. Evidence source.
-- [ ] **Attachment Tendencies tab** (optional in Phase 1 org mode): Secure, anxious, avoidant, fearful tendency ratings. Evidence source.
+- [x] **Big Five tab**: OCEAN 0–100 direct entry, evidence source dropdown, missing-data flag — `scripts/build_workbook.py`
+- [x] **Conflict Style tab**: Five-mode profile, Mode_Sum formula, Sum_Valid check (100±1), evidence source — `scripts/build_workbook.py`
+- [x] **Psychological Safety tab**: 7-item Edmondson survey, per-person PS score, group aggregate, evidence source — `scripts/build_workbook.py`
+- [x] **Communication & Decision Style tab**: 9 fields (5 comm + 4 decision), polarity labels, evidence source, missing-data flag — `scripts/build_workbook.py`
+- [x] **Emotional Intelligence tab**: 4 dimensions, EQ_Composite formula, evidence source, missing-data flag — `scripts/build_workbook.py`
+- [x] **Attachment Tendencies tab**: 4 tendencies, Attach_Sum + Sum_Valid, evidence source — `scripts/build_workbook.py`
 
 #### 1.4 — Spreadsheet Build: Relationship Matrix
 - [ ] **Relationship Matrix tab**: Auto-populated person list from People tab. Directed pairwise fields: trust, influence, emotional closeness, respect, conflict intensity, dependency, communication frequency, avoidance, alliance/coalition, power differential. Evidence source per pair. Notes field.
@@ -851,12 +851,14 @@ Record one row for each run with `run_status=failed_guardrail` to support prompt
 | 2026-04-24 | Focus Phase 1 on organizational teams only | Clearer roles, less clinical risk than family-system modeling; aligns with design doc MVP recommendation |
 | 2026-04-24 | Use Tiers 1–4 of framework stack as modeling engine; Tier 5 as interpretive overlay only | Prevents pseudoscience; anchors outputs to evidence |
 | 2026-04-24 | Hybrid multi-agent simulation approach (not pure LLM roleplay) | Keeps AI anchored to structured data, prevents drift and stereotyping |
+| 2026-04-24 | Use Excel (.xlsx) as Phase 1 workbook format, built via Python/openpyxl (`scripts/build_workbook.py`) | Enables version-controlled, reproducible workbook generation; eliminates manual tab setup errors; easily importable into Google Sheets if sharing is needed later |
+| 2026-04-24 | Pre-populate synthetic dataset directly in the build script | Guarantees all 17 Gate A validation checks have test data to run against from day one |
 
 ---
 
 ## Notes / Open Questions
 
-- **Spreadsheet format**: Google Sheets preferred for formula power and sharability, but Excel (.xlsx) can be generated programmatically and version-controlled. Decide before building.
+- **Spreadsheet format**: ~~Open~~ **Resolved** — Excel (.xlsx) via `scripts/build_workbook.py`. Import into Google Sheets for sharing if needed.
 - **Prompt format**: Should prompt blocks be JSON, YAML, or structured natural language? JSON is machine-parseable; natural language may produce better simulation quality. Hybrid likely best — natural language narrative wrapping JSON data blocks.
 - **Evidence confidence scale**: Design doc mentions 1–5 numeric or categorical labels (Validated/Self-report/Observed/Inferred/Missing). Categorical is clearer for users; can map to numeric for computations.
 - **OCEAN scoring**: Design doc recommends IPIP-based Big Five (50-item or 120-item). In Phase 1, allow manual score entry (pre-computed from any validated instrument) rather than administering the assessment in the spreadsheet.
