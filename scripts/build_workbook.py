@@ -1,0 +1,570 @@
+#!/usr/bin/env python3
+"""
+Gate A workbook builder for the Group Dynamics Simulator.
+
+Creates an Excel workbook (.xlsx) with all Gate A tabs, pre-filled with
+the 5-person Alpha Leadership Team synthetic dataset defined in PLAN.md.
+
+Run:   python3 scripts/build_workbook.py
+Output: workbook/group-dynamics-simulator-phase1.xlsx
+"""
+
+import os
+import datetime
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+from openpyxl.formatting.rule import FormulaRule
+from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.utils import get_column_letter
+from openpyxl.workbook.defined_name import DefinedName
+
+# ── Version & date ────────────────────────────────────────────────────────────
+
+VERSION = "phase1_gateA_v1"
+TODAY   = datetime.date.today().isoformat()
+
+# ── Synthetic dataset ─────────────────────────────────────────────────────────
+
+PEOPLE = [
+    {"id": "alex.rivera", "name": "Alex Rivera",  "role": "leader",  "group": "Alpha Leadership Team", "authority": 5, "active": "TRUE"},
+    {"id": "jordan.chen", "name": "Jordan Chen",  "role": "manager", "group": "Alpha Leadership Team", "authority": 4, "active": "TRUE"},
+    {"id": "sam.okafor",  "name": "Sam Okafor",   "role": "manager", "group": "Alpha Leadership Team", "authority": 4, "active": "TRUE"},
+    {"id": "morgan.kim",  "name": "Morgan Kim",   "role": "ic",      "group": "Alpha Leadership Team", "authority": 2, "active": "TRUE"},
+    {"id": "casey.walsh", "name": "Casey Walsh",  "role": "advisor", "group": "Alpha Leadership Team", "authority": 3, "active": "TRUE"},
+]
+
+# Big Five: O, C, E, A, N — direct 0..100 entry per contract
+OCEAN = [
+    ("alex.rivera",  72, 81, 78, 58, 35, "self_report"),
+    ("jordan.chen",  65, 88, 52, 71, 42, "self_report"),
+    ("sam.okafor",   61, 74, 90, 68, 38, "self_report"),
+    ("morgan.kim",   79, 77, 41, 65, 55, "self_report"),
+    ("casey.walsh",  83, 69, 63, 76, 28, "validated"),
+]
+
+# Conflict style: Competing, Collaborating, Compromising, Avoiding, Accommodating
+CONFLICT = [
+    ("alex.rivera",  35, 30, 20,  5, 10, "observed"),
+    ("jordan.chen",  15, 45, 25, 10,  5, "observed"),
+    ("sam.okafor",   40, 25, 20,  5, 10, "observed"),
+    ("morgan.kim",   10, 35, 25, 25,  5, "self_report"),
+    ("casey.walsh",  10, 40, 30,  5, 15, "self_report"),
+]
+
+# Psych Safety: 7 Edmondson items, scale 1..5
+PSYCH_SAFETY = [
+    ("alex.rivera",  4, 4, 3, 4, 4, 3, 3, "self_report"),
+    ("jordan.chen",  4, 4, 4, 3, 4, 4, 4, "self_report"),
+    ("sam.okafor",   3, 3, 3, 3, 3, 3, 3, "self_report"),
+    ("morgan.kim",   2, 3, 2, 2, 3, 2, 3, "self_report"),
+    ("casey.walsh",  4, 5, 4, 5, 4, 4, 4, "self_report"),
+]
+
+# Comm/Decision: directness, context_orientation, verbal_dominance, listening_quality,
+#                feedback_tolerance, analytical_vs_intuitive, risk_appetite,
+#                decision_speed, ambiguity_tolerance
+COMM = [
+    ("alex.rivera",  85, 35, 78, 55, 62, 55, 68, 80, 60, "observed"),
+    ("jordan.chen",  72, 42, 45, 78, 71, 85, 42, 58, 45, "observed"),
+    ("sam.okafor",   90, 28, 88, 51, 58, 35, 78, 88, 72, "observed"),
+    ("morgan.kim",   52, 55, 30, 82, 68, 88, 38, 42, 52, "self_report"),
+    ("casey.walsh",  65, 68, 55, 88, 80, 62, 50, 62, 75, "observed"),
+]
+
+# EQ: perceiving, using, understanding, managing
+EQ = [
+    ("alex.rivera",  68, 70, 65, 72, "self_report"),
+    ("jordan.chen",  75, 68, 78, 72, "self_report"),
+    ("sam.okafor",   62, 72, 55, 58, "self_report"),
+    ("morgan.kim",   78, 55, 72, 60, "self_report"),
+    ("casey.walsh",  82, 78, 80, 85, "validated"),
+]
+
+# Attachment: secure, anxious, avoidant, fearful (each row sums to 100)
+ATTACHMENT = [
+    ("alex.rivera",  55, 20, 15, 10, "inferred"),
+    ("jordan.chen",  65, 18, 12,  5, "inferred"),
+    ("sam.okafor",   45, 30, 15, 10, "inferred"),
+    ("morgan.kim",   40, 35, 15, 10, "inferred"),
+    ("casey.walsh",  70, 15, 10,  5, "inferred"),
+]
+
+# Gate A validation checks (17 required)
+VALIDATION_CHECKS = [
+    ("GA-01", "People",          "All 5 PersonIDs match slug pattern (lowercase, no spaces, 3–64 chars)",   "ID_Valid=TRUE all rows"),
+    ("GA-02", "People",          "No duplicate PersonIDs",                                                   "0 duplicates"),
+    ("GA-03", "People",          "Role values all in allowed enum",                                          "All valid"),
+    ("GA-04", "People",          "AuthorityLevel all in 1..5",                                               "All valid"),
+    ("GA-05", "Big Five",        "All OCEAN values in 0..100",                                               "No red cells"),
+    ("GA-06", "Big Five",        "No missing-data flags (all 5 fields present per person)",                  "Missing_Flag=FALSE"),
+    ("GA-07", "Conflict Style",  "Mode sums all within 99–101",                                              "Mode_Sum in [99,101]"),
+    ("GA-08", "Conflict Style",  "Sum_Valid = TRUE for all 5 rows",                                          "Sum_Valid=TRUE"),
+    ("GA-09", "Psych Safety",    "All item values in 1..5",                                                  "No red cells"),
+    ("GA-10", "Psych Safety",    "Per-person scores match spec ±1: 64, 71, 50, 36, 82",                     "Within ±1 of spec"),
+    ("GA-11", "Psych Safety",    "Group aggregate = 61 ±1",                                                  "60–62"),
+    ("GA-12", "Comm/Decision",   "All values in 0..100",                                                     "No red cells"),
+    ("GA-13", "Comm/Decision",   "Polarity labels present in header row 2",                                  "Labels visible"),
+    ("GA-14", "EQ",              "All values in 0..100; EQ_Composite computed for all rows",                 "Composite filled, no red"),
+    ("GA-15", "Attachment",      "Attach_Sum = 100 and Sum_Valid = TRUE for all 5 rows",                     "Sum_Valid=TRUE"),
+    ("GA-16", "Cross-tab",       "PersonID in each assessment tab resolves to valid People!PersonID",         "No NOT FOUND"),
+    ("GA-17", "Workbook",        f'Sheet version tag "{VERSION}" present in README-Consent A1',              "Tag present"),
+]
+
+# ── Style constants ───────────────────────────────────────────────────────────
+
+_THIN   = Side(style="thin")
+_MEDIUM = Side(style="medium")
+
+HDR_FILL      = PatternFill("solid", fgColor="2F5496")
+SUBHDR_FILL   = PatternFill("solid", fgColor="BDD7EE")
+COMPUTED_FILL = PatternFill("solid", fgColor="E2EFDA")
+RED_FILL      = PatternFill("solid", fgColor="FFCCCC")
+YELLOW_FILL   = PatternFill("solid", fgColor="FFFFC7")
+GRAY_FILL     = PatternFill("solid", fgColor="F2F2F2")
+
+HDR_FONT    = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+BOLD_FONT   = Font(name="Calibri", size=11, bold=True)
+NORMAL_FONT = Font(name="Calibri", size=11)
+SMALL_FONT  = Font(name="Calibri", size=9, italic=True, color="595959")
+NOTE_FONT   = Font(name="Calibri", size=9, color="595959")
+
+CENTER = Alignment(horizontal="center", vertical="center", wrap_text=True)
+LEFT   = Alignment(horizontal="left",   vertical="center", wrap_text=True)
+CELL_BORDER = Border(left=_THIN, right=_THIN, top=_THIN, bottom=_THIN)
+
+# ── Style helpers ─────────────────────────────────────────────────────────────
+
+def _h(ws, row, col, text, width=None):
+    """Write a header cell."""
+    c = ws.cell(row=row, column=col, value=text)
+    c.font, c.fill, c.alignment, c.border = HDR_FONT, HDR_FILL, CENTER, CELL_BORDER
+    if width:
+        ws.column_dimensions[get_column_letter(col)].width = width
+    return c
+
+def _sh(ws, row, col, text, width=None):
+    """Write a sub-header / polarity-label cell."""
+    c = ws.cell(row=row, column=col, value=text)
+    c.font, c.fill, c.alignment, c.border = NOTE_FONT, SUBHDR_FILL, CENTER, CELL_BORDER
+    if width:
+        ws.column_dimensions[get_column_letter(col)].width = width
+    return c
+
+def _d(ws, row, col, value=None):
+    """Write a data cell."""
+    c = ws.cell(row=row, column=col, value=value)
+    c.font, c.border, c.alignment = NORMAL_FONT, CELL_BORDER, LEFT
+    return c
+
+def _f(ws, row, col, formula):
+    """Write a computed (formula) cell."""
+    c = ws.cell(row=row, column=col, value=formula)
+    c.font, c.fill, c.border, c.alignment = NORMAL_FONT, COMPUTED_FILL, CELL_BORDER, CENTER
+    return c
+
+def _add_dv_list(ws, cell_range, choices, msg=""):
+    dv = DataValidation(
+        type="list",
+        formula1=f'"{choices}"',
+        allow_blank=False,
+        showErrorMessage=True,
+        errorTitle="Invalid value",
+        error=msg or f"Must be one of: {choices}",
+    )
+    ws.add_data_validation(dv)
+    dv.add(cell_range)
+
+def _add_dv_int(ws, cell_range, lo, hi):
+    dv = DataValidation(
+        type="whole", operator="between",
+        formula1=str(lo), formula2=str(hi),
+        allow_blank=True,
+        showErrorMessage=True,
+        errorTitle="Out of range",
+        error=f"Enter an integer between {lo} and {hi}.",
+    )
+    ws.add_data_validation(dv)
+    dv.add(cell_range)
+
+def _red_if(ws, cell_range, formula):
+    """Apply red fill when the formula is TRUE."""
+    ws.conditional_formatting.add(cell_range, FormulaRule(formula=[formula], fill=RED_FILL))
+
+def _yellow_if(ws, cell_range, formula):
+    ws.conditional_formatting.add(cell_range, FormulaRule(formula=[formula], fill=YELLOW_FILL))
+
+def _col(n):
+    return get_column_letter(n)
+
+# ── Tab builders ──────────────────────────────────────────────────────────────
+
+def build_readme(ws):
+    ws.sheet_view.showGridLines = False
+    ws.column_dimensions["A"].width = 18
+    ws.column_dimensions["B"].width = 80
+
+    def section(row, label, text):
+        ws.cell(row=row, column=1, value=label).font = BOLD_FONT
+        c = ws.cell(row=row, column=2, value=text)
+        c.font, c.alignment = NORMAL_FONT, LEFT
+        ws.row_dimensions[row].height = 30
+
+    # Version tag — GA-17 checks this cell
+    tag = ws.cell(row=1, column=1, value=f"version: {VERSION}")
+    tag.font = SMALL_FONT
+    ws.cell(row=1, column=2, value=f"created: {TODAY}").font = SMALL_FONT
+
+    ws.cell(row=2, column=1).fill = GRAY_FILL
+
+    section(3,  "Project",
+            "Group Dynamics Simulator — Phase 1 Spreadsheet Prototype. "
+            "Personal use only. Validates the psychological model and prompt design before Phase 2 software build.")
+    section(5,  "Purpose",
+            "Given structured psychological profiles, relationship data, and a scenario, simulate probable "
+            "group dynamics and produce probability-weighted, evidence-traced outcomes.")
+    section(7,  "NOT for",
+            "Clinical diagnosis · Hiring or performance decisions · Legal proceedings · Multi-tenant use.")
+    section(9,  "Consent",
+            "All assessment data should be collected with the knowledge of the individuals assessed, "
+            "or clearly marked as observer estimates / inferences.")
+    section(11, "Evidence sources",
+            "validated — instrument-administered and quality-checked  |  "
+            "self_report — self-entered by subject  |  "
+            "observed — coach/facilitator estimate from direct observation  |  "
+            "inferred — reasoned from indirect evidence  |  "
+            "missing — not collected")
+    section(13, "Tab guide",
+            "People → Big Five → Conflict Style → Psych Safety → Comm-Decision → EQ → Attachment  "
+            "(assessment inputs)  ·  Gate-A-Validation-Log (quality checks)")
+    section(15, "Version log",
+            "Edit the table below each session.")
+
+    # Version log header
+    for col, text in enumerate(["Date", "Editor", "Change description"], 1):
+        _h(ws, 17, col, text)
+    _d(ws, 18, 1, TODAY)
+    _d(ws, 18, 2, "build_workbook.py")
+    _d(ws, 18, 3, f"Initial workbook generated; version {VERSION}; 5-person synthetic dataset loaded.")
+
+
+def build_people(ws):
+    headers = [
+        ("PersonID",         16),
+        ("DisplayName",      20),
+        ("Role",             13),
+        ("GroupMembership",  24),
+        ("AuthorityLevel",   14),
+        ("IsActive",         10),
+        ("ID_Valid",         10),
+    ]
+    for col, (text, width) in enumerate(headers, 1):
+        _h(ws, 1, col, text, width)
+
+    DATA_ROWS = range(2, 7)
+    for i, p in enumerate(PEOPLE):
+        r = i + 2
+        _d(ws, r, 1, p["id"])
+        _d(ws, r, 2, p["name"])
+        _d(ws, r, 3, p["role"])
+        _d(ws, r, 4, p["group"])
+        _d(ws, r, 5, p["authority"])
+        _d(ws, r, 6, p["active"])
+        # Simplified slug check: lowercase, no spaces, length 3–64
+        _f(ws, r, 7,
+           f'=AND(LEN(A{r})>=3,LEN(A{r})<=64,EXACT(LOWER(A{r}),A{r}),ISERROR(FIND(" ",A{r})))')
+
+    _add_dv_list(ws, "C2:C6", "leader,manager,ic,advisor,observer,other")
+    _add_dv_list(ws, "F2:F6", "TRUE,FALSE")
+    _add_dv_int(ws,  "E2:E6", 1, 5)
+
+    # Red if ID_Valid is FALSE
+    _red_if(ws, "A2:A6", "NOT(G2)")
+    # Red if AuthorityLevel out of range
+    _red_if(ws, "E2:E6", "OR(E2<1,E2>5)")
+
+
+def build_big_five(ws):
+    traits = ["Openness", "Conscientiousness", "Extraversion", "Agreeableness", "Neuroticism"]
+    hdrs = [("PersonID", 14)] + [(t, 16) for t in traits] + [("Evidence Source", 16), ("Missing Flag", 12)]
+    for col, (text, width) in enumerate(hdrs, 1):
+        _h(ws, 1, col, text, width)
+
+    # Polarity note row 2
+    _sh(ws, 2, 1, "cross-ref → People!A")
+    for col in range(2, 7):
+        _sh(ws, 2, col, "direct 0–100 entry")
+    _sh(ws, 2, 7, "source enum")
+    _sh(ws, 2, 8, "computed")
+
+    for i, row_data in enumerate(OCEAN):
+        r = i + 3
+        pid, O, C, E, A, N, src = row_data
+        _d(ws, r, 1, pid)
+        for col, val in enumerate([O, C, E, A, N], 2):
+            _d(ws, r, col, val)
+        _d(ws, r, 7, src)
+        _f(ws, r, 8, f'=IF(A{r}="","",COUNTA(B{r}:F{r})<5)')
+
+    _add_dv_int(ws, "B3:F7", 0, 100)
+    _add_dv_list(ws, "G3:G7", "validated,self_report,observed,inferred,missing")
+    # Red on out-of-range trait values
+    _red_if(ws, "B3:F7", "OR(B3<0,B3>100)")
+    # Yellow on missing flag = TRUE
+    _yellow_if(ws, "H3:H7", "H3=TRUE")
+
+
+def build_conflict(ws):
+    modes = ["Competing", "Collaborating", "Compromising", "Avoiding", "Accommodating"]
+    hdrs = [("PersonID", 14)] + [(m, 14) for m in modes] + \
+           [("Mode Sum", 10), ("Sum Valid\n(100±1)", 12), ("Evidence Source", 16)]
+    for col, (text, width) in enumerate(hdrs, 1):
+        _h(ws, 1, col, text, width)
+
+    for i, row_data in enumerate(CONFLICT):
+        r = i + 2
+        pid, comp, collab, compromise, avoid, accom, src = row_data
+        _d(ws, r, 1, pid)
+        for col, val in enumerate([comp, collab, compromise, avoid, accom], 2):
+            _d(ws, r, col, val)
+        _f(ws, r, 7, f"=SUM(B{r}:F{r})")
+        _f(ws, r, 8, f'=IF(G{r}=0,"",ABS(G{r}-100)<=1)')
+        _d(ws, r, 9, src)
+
+    _add_dv_int(ws, "B2:F6", 0, 100)
+    _add_dv_list(ws, "I2:I6", "validated,self_report,observed,inferred,missing")
+    # Red row when sum is outside 99–101
+    _red_if(ws, "A2:I6", 'AND($G2<>"",ABS($G2-100)>1)')
+
+
+def build_psych_safety(ws):
+    hdrs = [("PersonID", 14)] + [(f"Item {i}", 8) for i in range(1, 8)] + \
+           [("PS Score\n(0–100)", 12), ("Missing\nFlag", 10), ("Evidence Source", 16)]
+    for col, (text, width) in enumerate(hdrs, 1):
+        _h(ws, 1, col, text, width)
+
+    _sh(ws, 2, 1, "cross-ref → People!A")
+    for col in range(2, 9):
+        _sh(ws, 2, col, "1=low safety · 5=high safety")
+    _sh(ws, 2, 9, "=ROUND(100×(avg−1)/4,0)")
+    _sh(ws, 2, 10, "computed")
+    _sh(ws, 2, 11, "source enum")
+
+    for i, row_data in enumerate(PSYCH_SAFETY):
+        r = i + 3
+        pid = row_data[0]
+        items = row_data[1:8]
+        src = row_data[8]
+        _d(ws, r, 1, pid)
+        for col, val in enumerate(items, 2):
+            _d(ws, r, col, val)
+        _f(ws, r, 9, f'=IF(A{r}="","",ROUND(100*(AVERAGE(B{r}:H{r})-1)/4,0))')
+        _f(ws, r, 10, f'=IF(A{r}="","",COUNTA(B{r}:H{r})<7)')
+        _d(ws, r, 11, src)
+
+    # Group aggregate row
+    agg_row = 9
+    ws.cell(row=agg_row, column=1, value="GROUP AGGREGATE").font = BOLD_FONT
+    _f(ws, agg_row, 9, f"=IFERROR(ROUND(AVERAGE(I3:I7),0),\"\")")
+
+    _add_dv_int(ws, "B3:H7", 1, 5)
+    _add_dv_list(ws, "K3:K7", "validated,self_report,observed,inferred,missing")
+    _red_if(ws, "B3:H7", "OR(B3<1,B3>5)")
+    _yellow_if(ws, "J3:J7", "J3=TRUE")
+
+
+def build_comm_decision(ws):
+    comm_hdrs = [
+        ("Directness\n(0=indirect,\n100=direct)", 16),
+        ("Context Orient.\n(0=low-ctx,\n100=high-ctx)", 16),
+        ("Verbal\nDominance", 13),
+        ("Listening\nQuality", 13),
+        ("Feedback\nTolerance", 13),
+    ]
+    dec_hdrs = [
+        ("Analytical vs\nIntuitive\n(0=intuitive,\n100=analytical)", 18),
+        ("Risk\nAppetite", 12),
+        ("Decision\nSpeed", 12),
+        ("Ambiguity\nTolerance", 13),
+    ]
+    all_hdrs = [("PersonID", 14)] + comm_hdrs + dec_hdrs + \
+               [("Evidence Source", 16), ("Missing\nFlag", 10)]
+
+    for col, (text, width) in enumerate(all_hdrs, 1):
+        _h(ws, 1, col, text, width)
+
+    # Section labels row 2
+    _sh(ws, 2, 1, "cross-ref → People!A")
+    for col in range(2, 7):
+        _sh(ws, 2, col, "Communication")
+    for col in range(7, 11):
+        _sh(ws, 2, col, "Decision")
+    _sh(ws, 2, 11, "source enum")
+    _sh(ws, 2, 12, "computed")
+
+    for i, row_data in enumerate(COMM):
+        r = i + 3
+        pid = row_data[0]
+        vals = row_data[1:10]
+        src = row_data[10]
+        _d(ws, r, 1, pid)
+        for col, val in enumerate(vals, 2):
+            _d(ws, r, col, val)
+        _d(ws, r, 11, src)
+        # Missing if ≥5 of 9 fields blank
+        _f(ws, r, 12, f'=IF(A{r}="","",COUNTA(B{r}:J{r})<5)')
+
+    _add_dv_int(ws, "B3:J7", 0, 100)
+    _add_dv_list(ws, "K3:K7", "validated,self_report,observed,inferred,missing")
+    _red_if(ws, "B3:J7", "OR(B3<0,B3>100)")
+    _yellow_if(ws, "L3:L7", "L3=TRUE")
+
+
+def build_eq(ws):
+    dims = ["Perceiving", "Using", "Understanding", "Managing"]
+    hdrs = [("PersonID", 14)] + [(d, 15) for d in dims] + \
+           [("EQ Composite\n(mean)", 14), ("Missing\nFlag", 10), ("Evidence Source", 16)]
+    for col, (text, width) in enumerate(hdrs, 1):
+        _h(ws, 1, col, text, width)
+
+    for i, row_data in enumerate(EQ):
+        r = i + 2
+        pid, perc, using, under, manag, src = row_data
+        _d(ws, r, 1, pid)
+        for col, val in enumerate([perc, using, under, manag], 2):
+            _d(ws, r, col, val)
+        _f(ws, r, 6, f'=IF(A{r}="","",IFERROR(ROUND(AVERAGE(B{r}:E{r}),0),""))')
+        _f(ws, r, 7, f'=IF(A{r}="","",COUNTA(B{r}:E{r})<4)')
+        _d(ws, r, 8, src)
+
+    _add_dv_int(ws, "B2:E6", 0, 100)
+    _add_dv_list(ws, "H2:H6", "validated,self_report,observed,inferred,missing")
+    _red_if(ws, "B2:E6", "OR(B2<0,B2>100)")
+    _yellow_if(ws, "G2:G6", "G2=TRUE")
+
+
+def build_attachment(ws):
+    hdrs = [
+        ("PersonID",        14),
+        ("Secure",          12),
+        ("Anxious",         12),
+        ("Avoidant",        12),
+        ("Fearful",         12),
+        ("Attach Sum",      12),
+        ("Sum Valid\n(100±1)",  14),
+        ("Evidence Source", 16),
+    ]
+    for col, (text, width) in enumerate(hdrs, 1):
+        _h(ws, 1, col, text, width)
+
+    note = ws.cell(row=2, column=1,
+                   value="Optional. Leave all four blank if not used. When all four are present they should sum to 100 ±1.")
+    note.font = SMALL_FONT
+    ws.merge_cells("A2:H2")
+    note.alignment = LEFT
+
+    for i, row_data in enumerate(ATTACHMENT):
+        r = i + 3
+        pid, sec, anx, avoid, fear, src = row_data
+        _d(ws, r, 1, pid)
+        for col, val in enumerate([sec, anx, avoid, fear], 2):
+            _d(ws, r, col, val)
+        _f(ws, r, 6, f'=IF(COUNTA(B{r}:E{r})=0,"",SUM(B{r}:E{r}))')
+        _f(ws, r, 7, f'=IF(F{r}="","",IF(COUNTA(B{r}:E{r})<4,"incomplete",IF(ABS(F{r}-100)<=1,TRUE,FALSE)))')
+        _d(ws, r, 8, src)
+
+    _add_dv_int(ws, "B3:E7", 0, 100)
+    _add_dv_list(ws, "H3:H7", "validated,self_report,observed,inferred,missing")
+    # Red when sum is outside 99–101 and all four values are present
+    _red_if(ws, "A3:H7", 'AND(COUNTA($B3:$E3)=4,ABS($F3-100)>1)')
+    # Yellow when incomplete
+    _yellow_if(ws, "G3:G7", 'G3="incomplete"')
+
+
+def build_validation_log(ws):
+    hdrs = [
+        ("Check ID",         10),
+        ("Tab",              18),
+        ("Check Description",50),
+        ("Expected",         28),
+        ("Actual",           18),
+        ("Pass / Fail",      12),
+        ("Notes",            30),
+        ("Date",             12),
+        ("Reviewer",         16),
+    ]
+    for col, (text, width) in enumerate(hdrs, 1):
+        _h(ws, 1, col, text, width)
+
+    for i, check in enumerate(VALIDATION_CHECKS):
+        r = i + 2
+        check_id, tab, desc, expected = check
+        _d(ws, r, 1, check_id)
+        _d(ws, r, 2, tab)
+        _d(ws, r, 3, desc)
+        _d(ws, r, 4, expected)
+        _d(ws, r, 5, "")   # Actual — fill manually
+        _d(ws, r, 6, "")   # Pass/Fail — fill manually
+        _d(ws, r, 7, "")   # Notes
+        _d(ws, r, 8, "")   # Date
+        _d(ws, r, 9, "")   # Reviewer
+
+    _add_dv_list(ws, "F2:F18", "Pass,Fail,N/A")
+    # Green fill when Pass, red when Fail
+    ws.conditional_formatting.add("F2:F18",
+        FormulaRule(formula=['F2="Pass"'], fill=PatternFill("solid", fgColor="C6EFCE")))
+    ws.conditional_formatting.add("F2:F18",
+        FormulaRule(formula=['F2="Fail"'], fill=RED_FILL))
+
+    ws.row_dimensions[1].height = 28
+
+
+# ── Workbook assembly ─────────────────────────────────────────────────────────
+
+TAB_ORDER = [
+    ("README-Consent",        build_readme),
+    ("People",                build_people),
+    ("Big Five",              build_big_five),
+    ("Conflict Style",        build_conflict),
+    ("Psych Safety",          build_psych_safety),
+    ("Comm-Decision",         build_comm_decision),
+    ("EQ",                    build_eq),
+    ("Attachment",            build_attachment),
+    ("Gate-A-Validation-Log", build_validation_log),
+]
+
+TAB_COLORS = {
+    "README-Consent":        "808080",
+    "People":                "2F5496",
+    "Big Five":              "375623",
+    "Conflict Style":        "843C0C",
+    "Psych Safety":          "1F4E79",
+    "Comm-Decision":         "7030A0",
+    "EQ":                    "4BACC6",
+    "Attachment":            "9C6500",
+    "Gate-A-Validation-Log": "404040",
+}
+
+
+def build():
+    wb = Workbook()
+    wb.remove(wb.active)          # drop the default empty sheet
+
+    for name, builder in TAB_ORDER:
+        ws = wb.create_sheet(title=name)
+        ws.sheet_properties.tabColor = TAB_COLORS.get(name, "000000")
+        ws.freeze_panes = "B2"
+        builder(ws)
+
+    # Named range: PersonIDs → People!A2:A6
+    dn = DefinedName("PersonIDs", attr_text="'People'!$A$2:$A$6")
+    wb.defined_names["PersonIDs"] = dn
+
+    out_dir = os.path.join(os.path.dirname(__file__), "..", "workbook")
+    os.makedirs(out_dir, exist_ok=True)
+    out_path = os.path.join(out_dir, "group-dynamics-simulator-phase1.xlsx")
+    wb.save(out_path)
+    print(f"Saved: {os.path.abspath(out_path)}")
+
+
+if __name__ == "__main__":
+    build()
