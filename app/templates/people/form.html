@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{% if person %}Edit Person{% else %}Add Person{% endif %}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <a href="/people/" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0">{% if person %}Edit {{ person.display_name }}{% else %}Add Person{% endif %}</h4>
+</div>
+
+{% if errors %}
+<div class="alert alert-danger">
+  <ul class="mb-0">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<div class="card border-0 shadow-sm" style="max-width:560px">
+  <div class="card-body">
+    <form method="post" action="{% if person %}/people/{{ person.id }}/edit{% else %}/people/new{% endif %}">
+      {% if not person %}
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Person ID <span class="text-danger">*</span></label>
+        <input type="text" name="id" class="form-control font-monospace" placeholder="e.g. alex.rivera"
+               pattern="[a-z0-9._\-]{3,64}" required>
+        <div class="form-text">Lowercase slug: letters, digits, dots, hyphens, underscores (3–64 chars).</div>
+      </div>
+      {% endif %}
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Display Name <span class="text-danger">*</span></label>
+        <input type="text" name="display_name" class="form-control"
+               value="{{ person.display_name if person else '' }}" required maxlength="120">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
+        <select name="role" class="form-select" required>
+          {% for r in ['leader','manager','ic','advisor','observer','other'] %}
+          <option value="{{ r }}" {% if person and person.role == r %}selected{% endif %}>{{ r }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Group Membership <span class="text-danger">*</span></label>
+        <input type="text" name="group_membership" class="form-control"
+               value="{{ person.group_membership if person else '' }}" required maxlength="120">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Authority Level <span class="text-danger">*</span></label>
+        <input type="number" name="authority_level" class="form-control" min="1" max="5"
+               value="{{ person.authority_level if person else 3 }}" required>
+        <div class="form-text">1 (lowest) to 5 (highest).</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Active?</label>
+        <select name="is_active" class="form-select">
+          <option value="True" {% if not person or person.is_active %}selected{% endif %}>Yes</option>
+          <option value="False" {% if person and not person.is_active %}selected{% endif %}>No</option>
+        </select>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">{% if person %}Save Changes{% else %}Add Person{% endif %}</button>
+        <a href="{% if person %}/people/{{ person.id }}{% else %}/people/{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

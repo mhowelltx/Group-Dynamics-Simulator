@@ -723,28 +723,28 @@ Use this checklist to confirm Gate A is complete before beginning Gate B.
 
 ### Milestones (Weekly Targets)
 
-| Week | Milestone | Target outcomes |
-|---|---|---|
-| Week 1 | Foundation | Repository scaffolding, environment bootstrapping, auth baseline (if in scope), and initial PostgreSQL schema migration generated directly from the frozen contract IDs. |
-| Week 2 | CRUD | API + UI CRUD flows for People, Relationships, Group Context, Scenarios, and Simulation Config; OpenAPI docs and basic integration tests in CI. |
-| Week 3 | Validation | Server-side validation parity with Phase 1 rules (ranges, enum constraints, sum checks, referential checks), import preflight checks, and error reporting for contract violations. |
-| Week 4 | Prompt/Run Logging | Prompt builder service using `sim.prompt_version_key`; run creation endpoint; pass-level logging; persisted prompt/run lineage and timestamps. |
-| Week 5 | Results UX | Run history interface, rubric entry/workflow, scored output views, and searchable scenario/run timeline for analyst review. |
-| Week 6 | Hardening | Regression suite, migration dry-runs from spreadsheet exports, performance tuning, observability, and release-readiness sign-off. |
+| Week | Milestone | Status | Target outcomes |
+|---|---|---|---|
+| Week 1 | Foundation | ✅ Complete | Repository scaffolding, FastAPI + SQLite app, SQLAlchemy schema for all canonical entities, validation service, prompt builder service, full CRUD UI, simulation run lifecycle. |
+| Week 2 | CRUD Hardening | 🚧 Next | OpenAPI docs, import CLI from Phase 1 xlsx, run history filtering, integration test suite. |
+| Week 3 | Validation | ⬜ Not Started | Extended validation parity, import preflight checks, error reporting for contract violations. |
+| Week 4 | Prompt/Run Logging | ⬜ Not Started | Multi-pass logging, prompt hash verification, run comparison view. |
+| Week 5 | Results UX | ⬜ Not Started | Run history filtering by group/scenario/date/version, rubric average charts. |
+| Week 6 | Hardening | ⬜ Not Started | Regression suite, migration dry-runs from spreadsheet exports, release-readiness sign-off. |
 
 ### Deliverables
 
-- [ ] **Database schema** mapped from canonical namespaces: `person.*`, `rel.*`, `group.*`, `scenario.*`, `sim.*`, `eval.*`, including keys, constraints, and migration files.
-- [ ] **API endpoints** for CRUD across canonical entities plus simulation-run creation (`POST /simulation-runs`) with contract-valid payloads.
-- [ ] **Prompt builder service** that composes structured model prompts from persisted records and uses `sim.prompt_version_key` as a required version/provenance anchor.
-- [ ] **Run history + rubric scoring** persistence and UX, including evaluator capture for `eval.evidence_anchoring_score`, `eval.internal_consistency_score`, `eval.plausibility_score`, `eval.intervention_usefulness_score`, `eval.uncertainty_quality_score`, computed `eval.rubric_average_score`, and notes.
+- [x] **Database schema** mapped from canonical namespaces: `person.*`, `rel.*`, `group.*`, `scenario.*`, `sim.*`, `eval.*`, including keys, constraints, and migration files. (`app/models/entities.py`)
+- [x] **API endpoints** for CRUD across canonical entities plus simulation-run creation with contract-valid payloads. (`app/routers/`)
+- [x] **Prompt builder service** that composes structured model prompts from persisted records and uses `sim.prompt_version_key` as a required version/provenance anchor. (`app/services/prompt_builder.py`)
+- [x] **Run history + rubric scoring** persistence and UX, including evaluator capture for all five rubric dimensions and computed `eval.rubric_average_score`. (`app/routers/simulations.py`, `app/templates/simulations/`)
 
 ### Exit Criteria (Definition of Done)
 
-- [ ] 100% of required Phase 1 frozen IDs needed for MVP (`person.*`, `rel.*`, `group.*`, `scenario.*`, `sim.*`, `eval.*`) are represented in schema and exposed through typed API contracts.
-- [ ] Contract validation parity is demonstrably implemented for critical rules: enum bounds, numeric ranges, conflict-style sum tolerance, attachment sum tolerance when complete, and relationship self-edge prevention.
+- [x] 100% of required Phase 1 frozen IDs needed for MVP (`person.*`, `rel.*`, `group.*`, `scenario.*`, `sim.*`, `eval.*`) are represented in schema and exposed through typed API contracts.
+- [x] Contract validation parity is demonstrably implemented for critical rules: enum bounds, numeric ranges, conflict-style sum tolerance, attachment sum tolerance when complete, and relationship self-edge prevention.
 - [ ] Spreadsheet import path validates and ingests at least one full Phase 1 sample dataset with **zero unmapped required fields** and explicit reporting for optional omissions.
-- [ ] End-to-end simulation lifecycle works in app: create/update entities → create run → build prompt from versioned config → store run/pass outputs → capture rubric scores.
+- [x] End-to-end simulation lifecycle works in app: create/update entities → create run → build prompt from versioned config → store run/pass outputs → capture rubric scores.
 - [ ] Run history UI supports filtering by group, scenario, date, and prompt version key, and shows rubric averages for completed evaluations.
 - [ ] Automated checks (unit + integration + migration checks) pass in CI for the release candidate branch.
 

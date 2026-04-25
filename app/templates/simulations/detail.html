@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Run {{ run.id }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <a href="/simulations/" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0 font-monospace small">{{ run.id }}</h4>
+  <div class="ms-2">
+    {% if run.status == 'complete' %}<span class="badge bg-success">complete</span>
+    {% elif run.status == 'failed_guardrail' %}<span class="badge bg-danger">guardrail fail</span>
+    {% elif run.status == 'running' %}<span class="badge bg-warning text-dark">running — awaiting output</span>
+    {% elif run.status == 'failed' %}<span class="badge bg-danger">failed</span>
+    {% else %}<span class="badge bg-secondary">{{ run.status }}</span>{% endif %}
+  </div>
+</div>
+
+<div class="alert alert-secondary small">
+  <strong>Simulation disclaimer:</strong> Outputs are probabilistic simulations, not predictions or clinical assessments.
+  Confidence is limited by data quality and completeness. Outputs require human review before any application.
+</div>
+
+<div class="row g-3">
+  <!-- Left column: run metadata + prompt -->
+  <div class="col-md-5">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">Run Metadata</div>
+      <div class="card-body small">
+        <dl class="mb-0">
+          <dt>Group</dt><dd><a href="/groups/{{ run.group_id }}">{{ run.group_id }}</a></dd>
+          <dt>Scenario</dt><dd><a href="/scenarios/{{ run.scenario_id }}">{{ run.scenario_id }}</a></dd>
+          <dt>Config Version</dt><dd><span class="badge bg-dark">{{ run.simulation_config.prompt_version_key }}</span></dd>
+          <dt>Prompt Hash</dt><dd class="font-monospace">{{ run.prompt_hash or '—' }}</dd>
+          <dt>Generated</dt><dd class="text-muted">{{ run.generated_at_utc.strftime('%Y-%m-%d %H:%M UTC') }}</dd>
+          <dt>Passes logged</dt><dd>{{ run.passes | length }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    {% if prompt_text %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+        <span>Assembled Prompt</span>
+        <button class="btn btn-outline-secondary btn-sm py-0" onclick="copyPrompt()"><i class="bi bi-clipboard me-1"></i>Copy</button>
+      </div>
+      <div class="card-body p-0">
+        <div class="prompt-block" id="promptBlock">{{ prompt_text }}</div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right column: evaluation + pass outputs -->
+  <div class="col-md-7">
+    <!-- Evaluation form -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">
+        {% if run.status in ('complete', 'failed_guardrail') %}Evaluation Scores{% else %}Submit Output &amp; Evaluate{% endif %}
+      </div>
+      <div class="card-body">
+        <form method="post" action="/simulations/{{ run.id }}/evaluate">
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Paste Claude Output JSON</label>
+            <textarea name="output_json" class="form-control font-monospace" rows="6" placeholder='{"run_id": "...", "run_status": "ok", ...}'></textarea>
+            <div class="form-text">Paste the JSON returned by Claude. The run status will be inferred from <code>run_status</code> field.</div>
+          </div>
+
+          <div class="mb-2 fw-semibold small">Evaluator Rubric Scores (1–5)</div>
+          <div class="row g-2 mb-3">
+            {% for field, label in [
+              ('eval_evidence_anchoring_score', 'Evidence Anchoring'),
+              ('eval_internal_consistency_score', 'Internal Consistency'),
+              ('eval_plausibility_score', 'Plausibility'),
+              ('eval_intervention_usefulness_score', 'Intervention Usefulness'),
+              ('eval_uncertainty_quality_score', 'Uncertainty Quality')
+            ] %}
+            <div class="col-sm-6">
+              <label class="form-label small mb-1">{{ label }}</label>
+              <input type="number" name="{{ field }}" class="form-control form-control-sm" min="1" max="5"
+                     value="{{ run[field] if run[field] is not none else '' }}" placeholder="1–5">
+            </div>
+            {% endfor %}
+          </div>
+
+          {% if rubric_average is not none %}
+          <div class="alert alert-light small mb-3">
+            <strong>Rubric Average:</strong> <span class="fs-5 fw-bold">{{ rubric_average }}</span> / 5.0
+          </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Evaluator Notes <span class="text-muted">(max 1000 chars)</span></label>
+            <textarea name="eval_rubric_notes" class="form-control" rows="3" maxlength="1000">{{ run.eval_rubric_notes or '' }}</textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm">Save Evaluation</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Pass outputs -->
+    {% if run.passes %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Simulation Pass Outputs ({{ run.passes | length }})</div>
+      <div class="accordion" id="passAcc">
+        {% for p in run.passes %}
+        <div class="accordion-item border-0 border-bottom">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed py-2 small" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#pass{{ loop.index }}">
+              Pass {{ p.pass_index + 1 }}
+              {% if p.overall_confidence is not none %}
+              — confidence {{ (p.overall_confidence * 100) | round | int }}%
+              {% endif %}
+              {% if p.coverage_ratio is not none %}
+              — coverage {{ (p.coverage_ratio * 100) | round | int }}%
+              {% endif %}
+            </button>
+          </h2>
+          <div id="pass{{ loop.index }}" class="accordion-collapse collapse">
+            <div class="accordion-body">
+              {% if p.output_json %}
+              <div class="prompt-block" style="max-height:300px">{{ p.output_json | tojson(indent=2) }}</div>
+              {% endif %}
+              {% if p.missing_field_ids %}
+              <div class="mt-2 small"><strong>Missing fields:</strong> {{ p.missing_field_ids | join(', ') }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyPrompt() {
+  const text = document.getElementById('promptBlock').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target.closest('button');
+    btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Copied!';
+    setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard me-1"></i>Copy'; }, 2000);
+  });
+}
+</script>
+{% endblock %}

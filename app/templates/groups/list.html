@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Groups{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0"><i class="bi bi-collection me-2"></i>Groups</h4>
+  <a href="/groups/new" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>New Group</a>
+</div>
+
+{% if groups %}
+<div class="row g-3">
+  {% for g in groups %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <h6 class="card-title mb-1"><a href="/groups/{{ g.id }}" class="text-decoration-none">{{ g.id }}</a></h6>
+          <span class="badge bg-secondary">{{ g.type }}</span>
+        </div>
+        <p class="card-text small text-muted mb-2">{{ g.shared_goals[:100] }}{% if g.shared_goals | length > 100 %}…{% endif %}</p>
+        <div class="d-flex gap-2 flex-wrap small">
+          <span class="badge bg-light text-dark border">{{ g.structure }}</span>
+          <span class="badge {% if g.stress_level >= 4 %}bg-danger{% elif g.stress_level >= 3 %}bg-warning text-dark{% else %}bg-success{% endif %}">
+            stress {{ g.stress_level }}
+          </span>
+          <span class="badge bg-light text-dark border">{{ g.members | length }} members</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-0 text-end pt-0">
+        <a href="/groups/{{ g.id }}/edit" class="btn btn-outline-secondary btn-sm py-0 me-1"><i class="bi bi-pencil"></i></a>
+        <form action="/groups/{{ g.id }}/delete" method="post" class="d-inline"
+              onsubmit="return confirm('Delete group {{ g.id }}?')">
+          <button type="submit" class="btn btn-outline-danger btn-sm py-0"><i class="bi bi-trash"></i></button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">No groups yet. <a href="/groups/new">Create the first group</a>.</div>
+{% endif %}
+{% endblock %}

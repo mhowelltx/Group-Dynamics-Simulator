@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Simulation Configs{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0"><i class="bi bi-sliders me-2"></i>Simulation Configs</h4>
+  <a href="/configs/new" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>New Config</a>
+</div>
+
+{% if configs %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 small">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th><th>Version Key</th><th>Passes</th><th>Randomness</th><th>Depth</th><th>Detail</th><th>Evidence</th><th>Created</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in configs %}
+        <tr>
+          <td class="font-monospace small text-muted">{{ c.id[:8] }}…</td>
+          <td><span class="badge bg-dark">{{ c.prompt_version_key }}</span></td>
+          <td>{{ c.passes }}</td>
+          <td>{{ c.randomness }}</td>
+          <td>{{ c.depth }}</td>
+          <td>{{ c.report_detail_level }}</td>
+          <td>{{ c.evidence_strictness }}</td>
+          <td class="text-muted">{{ c.created_at.strftime('%Y-%m-%d') }}</td>
+          <td class="text-end">
+            <form action="/configs/{{ c.id }}/delete" method="post" class="d-inline"
+                  onsubmit="return confirm('Delete this config?')">
+              <button type="submit" class="btn btn-outline-danger btn-sm py-0"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">No configs yet. <a href="/configs/new">Create the first config</a>.</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}{{ person.display_name }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <a href="/people/" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0">{{ person.display_name }}</h4>
+  <span class="badge bg-secondary ms-2">{{ person.role }}</span>
+  {% if not person.is_active %}<span class="badge bg-warning text-dark ms-1">inactive</span>{% endif %}
+  <div class="ms-auto">
+    <a href="/people/{{ person.id }}/edit" class="btn btn-outline-secondary btn-sm me-1"><i class="bi bi-pencil me-1"></i>Edit</a>
+    <a href="/assessments/new?person_id={{ person.id }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>Add Assessment</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Profile</div>
+      <div class="card-body">
+        <dl class="mb-0">
+          <dt>ID</dt><dd class="font-monospace small">{{ person.id }}</dd>
+          <dt>Group Membership</dt><dd>{{ person.group_membership }}</dd>
+          <dt>Authority Level</dt><dd>{{ person.authority_level }} / 5</dd>
+          <dt>Added</dt><dd class="small text-muted">{{ person.created_at.strftime('%Y-%m-%d') }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold d-flex justify-content-between">
+        <span>Assessment Snapshots</span>
+        <a href="/assessments/new?person_id={{ person.id }}" class="btn btn-primary btn-xs btn-sm py-0"><i class="bi bi-plus"></i></a>
+      </div>
+      <div class="card-body p-0">
+        {% if assessments %}
+        <div class="accordion" id="assessAcc">
+          {% for snap in assessments %}
+          <div class="accordion-item border-0 border-bottom">
+            <h2 class="accordion-header">
+              <button class="accordion-button {% if not loop.first %}collapsed{% endif %} py-2" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#snap{{ loop.index }}">
+                <span class="me-2 small text-muted">{{ snap.snapshot_date.strftime('%Y-%m-%d') }}</span>
+                <span class="badge badge-evidence
+                  {% if snap.evidence_source == 'validated' %}bg-success
+                  {% elif snap.evidence_source == 'self_report' %}bg-primary
+                  {% elif snap.evidence_source == 'observed' %}bg-info text-dark
+                  {% elif snap.evidence_source == 'inferred' %}bg-warning text-dark
+                  {% else %}bg-secondary{% endif %}">{{ snap.evidence_source }}</span>
+                {% if snap.missing_data_flag %}<span class="badge bg-danger ms-1">missing data</span>{% endif %}
+              </button>
+            </h2>
+            <div id="snap{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}">
+              <div class="accordion-body py-2 px-3">
+                <div class="row g-2 small">
+                  {% if snap.big_five_openness is not none %}
+                  <div class="col-12">
+                    <strong>Big Five (OCEAN)</strong>
+                    <div class="d-flex gap-2 flex-wrap mt-1">
+                      {% for label, val in [('O', snap.big_five_openness), ('C', snap.big_five_conscientiousness),
+                                            ('E', snap.big_five_extraversion), ('A', snap.big_five_agreeableness),
+                                            ('N', snap.big_five_neuroticism)] %}
+                      {% if val is not none %}
+                      <div class="text-center">
+                        <div class="small text-muted">{{ label }}</div>
+                        <span class="badge bg-primary">{{ val }}</span>
+                      </div>
+                      {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  {% if snap.conflict_competing is not none %}
+                  <div class="col-12">
+                    <strong>Conflict Style</strong>
+                    <div class="d-flex gap-2 flex-wrap mt-1">
+                      {% for label, val in [('Competing', snap.conflict_competing), ('Collab.', snap.conflict_collaborating),
+                                            ('Compromising', snap.conflict_compromising), ('Avoiding', snap.conflict_avoiding),
+                                            ('Accomm.', snap.conflict_accommodating)] %}
+                      {% if val is not none %}
+                      <div class="text-center">
+                        <div class="small text-muted">{{ label }}</div>
+                        <span class="badge bg-secondary">{{ val }}</span>
+                      </div>
+                      {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  {% if snap.psych_safety_item_1 is not none %}
+                  <div class="col-12">
+                    <strong>Psych Safety Items</strong>
+                    <div class="d-flex gap-1 flex-wrap mt-1">
+                      {% for i in range(1,8) %}
+                      {% set val = snap['psych_safety_item_' ~ i] if snap['psych_safety_item_' ~ i] is defined else none %}
+                      {% endfor %}
+                      {% for label, val in [('1', snap.psych_safety_item_1), ('2', snap.psych_safety_item_2),
+                                            ('3', snap.psych_safety_item_3), ('4', snap.psych_safety_item_4),
+                                            ('5', snap.psych_safety_item_5), ('6', snap.psych_safety_item_6),
+                                            ('7', snap.psych_safety_item_7)] %}
+                      {% if val is not none %}
+                      <span class="badge bg-info text-dark">{{ label }}: {{ val }}</span>
+                      {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  {% if snap.eq_perceiving is not none %}
+                  <div class="col-12">
+                    <strong>EQ</strong>
+                    <div class="d-flex gap-2 flex-wrap mt-1">
+                      {% for label, val in [('Perceiving', snap.eq_perceiving), ('Using', snap.eq_using),
+                                            ('Understanding', snap.eq_understanding), ('Managing', snap.eq_managing)] %}
+                      {% if val is not none %}
+                      <div class="text-center">
+                        <div class="small text-muted">{{ label }}</div>
+                        <span class="badge bg-success">{{ val }}</span>
+                      </div>
+                      {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+
+                <div class="mt-2 d-flex gap-1">
+                  <a href="/assessments/{{ snap.id }}/edit" class="btn btn-outline-secondary btn-sm py-0"><i class="bi bi-pencil me-1"></i>Edit</a>
+                  <form action="/assessments/{{ snap.id }}/delete" method="post" class="d-inline"
+                        onsubmit="return confirm('Delete this assessment?')">
+                    <button type="submit" class="btn btn-outline-danger btn-sm py-0"><i class="bi bi-trash me-1"></i>Delete</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-muted p-3">No assessments yet. <a href="/assessments/new?person_id={{ person.id }}">Add one</a>.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
