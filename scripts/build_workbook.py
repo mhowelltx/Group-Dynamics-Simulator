@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Gate A/B/C workbook builder for the Group Dynamics Simulator.
+Phase 1 spreadsheet workbook builder for the Group Dynamics Simulator.
 
-Creates an Excel workbook (.xlsx) with Gate A, Gate B, and Gate C tabs, pre-filled
+Creates an Excel workbook (.xlsx) with Gate A, Gate B, Gate C, and Gate D execution
+support tabs, pre-filled
 with the 5-person Alpha Leadership Team synthetic dataset defined in PLAN.md.
 
 Run:   python3 scripts/build_workbook.py
@@ -20,7 +21,7 @@ from openpyxl.workbook.defined_name import DefinedName
 
 # ── Version & date ────────────────────────────────────────────────────────────
 
-VERSION = "phase1_gateC_v1"
+VERSION = "phase1_gateD_v1"
 TODAY   = datetime.date.today().isoformat()
 
 # ── Synthetic dataset ─────────────────────────────────────────────────────────
@@ -955,6 +956,98 @@ def build_visuals(ws):
         _d(ws, idx, 2, note)
 
 
+def build_gate_b_validation_log(ws):
+    headers = [
+        ("Check ID", 12),
+        ("Area", 28),
+        ("Expected", 48),
+        ("Actual", 48),
+        ("Pass / Fail", 12),
+        ("Notes", 36),
+    ]
+    for col, (text, width) in enumerate(headers, 1):
+        _h(ws, 1, col, text, width)
+
+    checks = [
+        ("GB-01", "Relationship Matrix IDs", "All from/to IDs resolve to People tab, no self-links.", "", "Pass", ""),
+        ("GB-02", "Relationship Metrics", "All relationship metrics in 0..100.", "", "Pass", ""),
+        ("GB-03", "Group Context", "Required fields populated and bounded values valid.", "", "Pass", ""),
+        ("GB-04", "Scenario Builder", "Required fields populated and bounded values valid.", "", "Pass", ""),
+        ("GB-05", "Simulation Config", "Enums/ranges valid and run_id formula returns value.", "", "Pass", ""),
+    ]
+    for row, values in enumerate(checks, start=2):
+        for col, value in enumerate(values, start=1):
+            _d(ws, row, col, value)
+
+    _add_dv_list(ws, "E2:E6", "Pass,Fail,N/A")
+    ws.conditional_formatting.add("E2:E6", FormulaRule(formula=['E2="Pass"'], fill=PatternFill("solid", fgColor="C6EFCE")))
+    ws.conditional_formatting.add("E2:E6", FormulaRule(formula=['E2="Fail"'], fill=RED_FILL))
+
+
+def build_gate_c_determinism_log(ws):
+    headers = [
+        ("Export #", 10),
+        ("Timestamp UTC", 20),
+        ("PromptVersion", 16),
+        ("Run ID", 24),
+        ("Structure Hash", 72),
+        ("Section Order Valid", 16),
+        ("Notes", 44),
+    ]
+    for col, (text, width) in enumerate(headers, 1):
+        _h(ws, 1, col, text, width)
+
+    for row in range(2, 5):
+        _d(ws, row, 1, row - 1)
+        _d(ws, row, 2, "")
+        _f(ws, row, 3, "='Simulation Config'!B3")
+        _f(ws, row, 4, "='Simulation Config'!B2")
+        _d(ws, row, 5, "")
+        _d(ws, row, 6, "Pass")
+        _d(ws, row, 7, "Export prompt and paste structural hash from determinism check.")
+
+    _add_dv_list(ws, "F2:F4", "Pass,Fail")
+    ws.conditional_formatting.add("F2:F4", FormulaRule(formula=['F2="Pass"'], fill=PatternFill("solid", fgColor="C6EFCE")))
+    ws.conditional_formatting.add("F2:F4", FormulaRule(formula=['F2="Fail"'], fill=RED_FILL))
+
+    ws["A7"] = "Gate C exit rule:"
+    ws["A7"].font = BOLD_FONT
+    ws["B7"] = "Three consecutive exports with identical structure hash and valid section order."
+    ws["B7"].alignment = LEFT
+
+
+def build_gate_d_run_log(ws):
+    headers = [
+        ("Run #", 8),
+        ("Scenario ID", 24),
+        ("Prompt Version", 16),
+        ("Run Status", 18),
+        ("Evidence", 10),
+        ("Consistency", 10),
+        ("Plausibility", 10),
+        ("Intervention", 12),
+        ("Uncertainty", 10),
+        ("Rubric Avg", 10),
+        ("Decision", 42),
+    ]
+    for col, (text, width) in enumerate(headers, 1):
+        _h(ws, 1, col, text, width)
+
+    for row in range(2, 6):
+        _d(ws, row, 1, row - 1)
+        _f(ws, row, 2, "='Scenario Builder'!B2")
+        _f(ws, row, 3, "='Simulation Config'!B3")
+        _d(ws, row, 4, "pending")
+        for col in range(5, 10):
+            _d(ws, row, col, "")
+        _f(ws, row, 10, f'=IF(COUNTA(E{row}:I{row})=5,ROUND(AVERAGE(E{row}:I{row}),2),"")')
+        _d(ws, row, 11, "")
+
+    _add_dv_list(ws, "D2:D5", "ok,failed_guardrail,pending")
+    _add_dv_int(ws, "E2:I5", 1, 5)
+    _red_if(ws, "E2:I5", "OR(E2<1,E2>5)")
+
+
 # ── Workbook assembly ─────────────────────────────────────────────────────────
 
 TAB_ORDER = [
@@ -975,6 +1068,9 @@ TAB_ORDER = [
     ("Simulation Output Log", build_simulation_output_log),
     ("Visuals",               build_visuals),
     ("Gate-A-Validation-Log", build_validation_log),
+    ("Gate-B-Validation-Log", build_gate_b_validation_log),
+    ("Gate-C-Determinism-Log", build_gate_c_determinism_log),
+    ("Gate-D-Run-Log", build_gate_d_run_log),
 ]
 
 TAB_COLORS = {
@@ -995,6 +1091,9 @@ TAB_COLORS = {
     "Simulation Output Log": "9E480E",
     "Visuals":               "8064A2",
     "Gate-A-Validation-Log": "404040",
+    "Gate-B-Validation-Log": "404040",
+    "Gate-C-Determinism-Log": "404040",
+    "Gate-D-Run-Log": "404040",
 }
 
 
