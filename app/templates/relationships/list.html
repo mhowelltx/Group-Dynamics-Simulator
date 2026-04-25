@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Relationships{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0"><i class="bi bi-arrow-left-right me-2"></i>Relationships</h4>
+  <a href="/relationships/new" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>Add Relationship</a>
+</div>
+
+{% if edges %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 small">
+      <thead class="table-light">
+        <tr>
+          <th>From</th><th>→</th><th>To</th><th>Trust</th><th>Influence</th><th>Respect</th><th>Conflict</th><th>Health</th><th>Evidence</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in edges %}
+        {% set health = none %}
+        {% if e.trust is not none and e.respect is not none and e.communication_frequency is not none
+           and e.emotional_closeness is not none and e.conflict_intensity is not none
+           and e.avoidance is not none and e.power_differential is not none %}
+        {% set health = (0.25*e.trust + 0.20*e.respect + 0.15*e.communication_frequency +
+                         0.15*e.emotional_closeness + 0.10*(100-e.conflict_intensity) +
+                         0.10*(100-e.avoidance) + 0.05*(100-e.power_differential)) | round | int %}
+        {% endif %}
+        <tr>
+          <td class="font-monospace">{{ e.from_person_id }}</td>
+          <td>→</td>
+          <td class="font-monospace">{{ e.to_person_id }}</td>
+          <td>{{ e.trust if e.trust is not none else '—' }}</td>
+          <td>{{ e.influence if e.influence is not none else '—' }}</td>
+          <td>{{ e.respect if e.respect is not none else '—' }}</td>
+          <td>{{ e.conflict_intensity if e.conflict_intensity is not none else '—' }}</td>
+          <td>
+            {% if health is not none %}
+            <span class="badge {% if health >= 70 %}bg-success{% elif health >= 40 %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ health }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <span class="badge badge-evidence
+              {% if e.evidence_source == 'validated' %}bg-success
+              {% elif e.evidence_source == 'self_report' %}bg-primary
+              {% elif e.evidence_source == 'observed' %}bg-info text-dark
+              {% elif e.evidence_source == 'inferred' %}bg-warning text-dark
+              {% else %}bg-secondary{% endif %}">{{ e.evidence_source }}</span>
+          </td>
+          <td class="text-end">
+            <a href="/relationships/{{ e.id }}/edit" class="btn btn-outline-secondary btn-sm py-0"><i class="bi bi-pencil"></i></a>
+            <form action="/relationships/{{ e.id }}/delete" method="post" class="d-inline"
+                  onsubmit="return confirm('Delete this relationship?')">
+              <button type="submit" class="btn btn-outline-danger btn-sm py-0"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">No relationships yet. <a href="/relationships/new">Add the first relationship</a>.</div>
+{% endif %}
+{% endblock %}

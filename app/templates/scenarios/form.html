@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}{% if scenario %}Edit Scenario{% else %}New Scenario{% endif %}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <a href="/scenarios/" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0">{% if scenario %}Edit Scenario{% else %}New Scenario{% endif %}</h4>
+</div>
+
+{% if errors %}
+<div class="alert alert-danger">
+  <ul class="mb-0">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<div class="card border-0 shadow-sm" style="max-width:760px">
+  <div class="card-body">
+    <form method="post" action="{% if scenario %}/scenarios/{{ scenario.id }}/edit{% else %}/scenarios/new{% endif %}">
+
+      {% if not scenario %}
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Scenario ID <span class="text-danger">*</span></label>
+        <input type="text" name="id" class="form-control font-monospace" placeholder="e.g. q3-budget-conflict"
+               pattern="[a-z0-9._\-]{3,64}" required>
+        <div class="form-text">Lowercase slug (3–64 chars).</div>
+      </div>
+      {% endif %}
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-8">
+          <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+          <input type="text" name="title" class="form-control" maxlength="200"
+                 value="{{ scenario.title if scenario else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Type <span class="text-danger">*</span></label>
+          <select name="type" class="form-select" required>
+            {% for t in ['conflict','decision','change','crisis','performance','other'] %}
+            <option value="{{ t }}" {% if scenario and scenario.type == t %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Trigger Event <span class="text-danger">*</span></label>
+        <textarea name="trigger_event" class="form-control" rows="4" required>{{ scenario.trigger_event if scenario else '' }}</textarea>
+      </div>
+
+      <div class="row g-2 mb-3">
+        {% for field, label in [('stakes_level','Stakes Level'),('emotional_intensity','Emotional Intensity'),
+                                 ('ambiguity_level','Ambiguity Level'),('time_pressure','Time Pressure')] %}
+        <div class="col-sm-3">
+          <label class="form-label small fw-semibold">{{ label }} <span class="text-danger">*</span></label>
+          <input type="number" name="{{ field }}" class="form-control" min="1" max="5"
+                 value="{{ scenario[field] if scenario else 3 }}" required>
+          <div class="form-text tiny">1–5</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Required Decision <span class="text-danger">*</span></label>
+          <textarea name="required_decision" class="form-control" rows="2" required>{{ scenario.required_decision if scenario else '' }}</textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Resource Constraints</label>
+          <textarea name="resource_constraints" class="form-control" rows="2">{{ scenario.resource_constraints if scenario and scenario.resource_constraints else '' }}</textarea>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Success Criteria <span class="text-danger">*</span></label>
+          <textarea name="success_criteria" class="form-control" rows="2" required>{{ scenario.success_criteria if scenario else '' }}</textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Failure Consequences <span class="text-danger">*</span></label>
+          <textarea name="failure_consequences" class="form-control" rows="2" required>{{ scenario.failure_consequences if scenario else '' }}</textarea>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Known Facts <span class="text-muted small">(one per line)</span></label>
+          <textarea name="known_facts" class="form-control" rows="4">{{ (scenario.known_facts or []) | join('\n') if scenario else '' }}</textarea>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Uncertain Facts <span class="text-muted small">(one per line)</span></label>
+          <textarea name="uncertain_facts" class="form-control" rows="4">{{ (scenario.uncertain_facts or []) | join('\n') if scenario else '' }}</textarea>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Intervention Options <span class="text-muted small">(one per line)</span></label>
+          <textarea name="intervention_options" class="form-control" rows="4">{{ (scenario.intervention_options or []) | join('\n') if scenario else '' }}</textarea>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Link to Group</label>
+          <select name="group_id" class="form-select">
+            <option value="">— none —</option>
+            {% for g in groups %}
+            <option value="{{ g.id }}" {% if scenario and scenario.group_id == g.id %}selected{% endif %}>{{ g.id }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="public_visibility" value="true"
+                   id="pub_vis" {% if scenario and scenario.public_visibility %}checked{% endif %}>
+            <label class="form-check-label" for="pub_vis">Public visibility</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">{% if scenario %}Save Changes{% else %}Create Scenario{% endif %}</button>
+        <a href="{% if scenario %}/scenarios/{{ scenario.id }}{% else %}/scenarios/{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

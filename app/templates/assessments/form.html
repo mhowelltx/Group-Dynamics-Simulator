@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}{% if snapshot %}Edit Assessment{% else %}Add Assessment{% endif %}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <a href="{% if snapshot %}/people/{{ snapshot.person_id }}{% else %}/people/{% endif %}" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0">{% if snapshot %}Edit Assessment{% else %}New Assessment Snapshot{% endif %}</h4>
+</div>
+
+{% if errors %}
+<div class="alert alert-danger">
+  <ul class="mb-0">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<form method="post" action="{% if snapshot %}/assessments/{{ snapshot.id }}/edit{% else %}/assessments/new{% endif %}">
+  <div class="row g-3">
+
+    {% if not snapshot %}
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">Person <span class="text-danger">*</span></label>
+      <select name="person_id" class="form-select" required>
+        <option value="">— select person —</option>
+        {% for p in people %}
+        <option value="{{ p.id }}" {% if selected_person_id == p.id %}selected{% endif %}>
+          {{ p.display_name }} ({{ p.id }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    {% else %}
+    <input type="hidden" name="person_id" value="{{ snapshot.person_id }}">
+    {% endif %}
+
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">Evidence Source</label>
+      <select name="evidence_source" class="form-select">
+        {% for src in ['validated','self_report','observed','inferred','missing'] %}
+        <option value="{{ src }}" {% if snapshot and snapshot.evidence_source == src %}selected{% endif %}>{{ src }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Big Five -->
+    <div class="col-12">
+      <div class="card border-0 bg-light">
+        <div class="card-header bg-transparent fw-semibold">Big Five / OCEAN <span class="text-muted fw-normal small">(0–100 direct entry)</span></div>
+        <div class="card-body">
+          <div class="row g-2">
+            {% for field, label in [('big_five_openness','Openness'),('big_five_conscientiousness','Conscientiousness'),
+                                     ('big_five_extraversion','Extraversion'),('big_five_agreeableness','Agreeableness'),
+                                     ('big_five_neuroticism','Neuroticism')] %}
+            <div class="col-sm-4 col-md-2-4">
+              <label class="form-label small mb-1">{{ label }}</label>
+              <input type="number" name="{{ field }}" class="form-control form-control-sm" min="0" max="100"
+                     value="{{ snapshot[field] if snapshot and snapshot[field] is not none else '' }}" placeholder="0–100">
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conflict Style -->
+    <div class="col-12">
+      <div class="card border-0 bg-light">
+        <div class="card-header bg-transparent fw-semibold">Conflict Style <span class="text-muted fw-normal small">(five values must sum to 100 ± 1)</span></div>
+        <div class="card-body">
+          <div class="row g-2">
+            {% for field, label in [('conflict_competing','Competing'),('conflict_collaborating','Collaborating'),
+                                     ('conflict_compromising','Compromising'),('conflict_avoiding','Avoiding'),
+                                     ('conflict_accommodating','Accommodating')] %}
+            <div class="col-sm-4 col-md-2">
+              <label class="form-label small mb-1">{{ label }}</label>
+              <input type="number" name="{{ field }}" class="form-control form-control-sm" min="0" max="100"
+                     value="{{ snapshot[field] if snapshot and snapshot[field] is not none else '' }}" placeholder="0–100">
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Psychological Safety -->
+    <div class="col-12">
+      <div class="card border-0 bg-light">
+        <div class="card-header bg-transparent fw-semibold">Psychological Safety Items <span class="text-muted fw-normal small">(Edmondson scale 1–5)</span></div>
+        <div class="card-body">
+          <div class="row g-2">
+            {% for i in range(1, 8) %}
+            {% set field = 'psych_safety_item_' ~ i %}
+            <div class="col-sm-4 col-md-auto">
+              <label class="form-label small mb-1">Item {{ i }}</label>
+              <input type="number" name="{{ field }}" class="form-control form-control-sm" min="1" max="5" style="width:70px"
+                     value="{{ snapshot[field] if snapshot and snapshot[field] is not none else '' }}" placeholder="1–5">
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Communication & Decision -->
+    <div class="col-12">
+      <div class="card border-0 bg-light">
+        <div class="card-header bg-transparent fw-semibold">Communication & Decision Style <span class="text-muted fw-normal small">(0–100)</span></div>
+        <div class="card-body">
+          <div class="row g-2">
+            {% for field, label, hint in [
+              ('comm_directness','Directness',''),
+              ('comm_context_orientation','Context Orientation','0=low-context, 100=high-context'),
+              ('comm_verbal_dominance','Verbal Dominance',''),
+              ('comm_listening_quality','Listening Quality',''),
+              ('comm_feedback_tolerance','Feedback Tolerance',''),
+              ('decision_analytical_vs_intuitive','Analytical vs Intuitive','0=intuitive, 100=analytical'),
+              ('decision_risk_appetite','Risk Appetite',''),
+              ('decision_speed','Decision Speed',''),
+              ('decision_ambiguity_tolerance','Ambiguity Tolerance','')
+            ] %}
+            <div class="col-sm-6 col-md-4">
+              <label class="form-label small mb-1">{{ label }}{% if hint %} <span class="text-muted">({{ hint }})</span>{% endif %}</label>
+              <input type="number" name="{{ field }}" class="form-control form-control-sm" min="0" max="100"
+                     value="{{ snapshot[field] if snapshot and snapshot[field] is not none else '' }}" placeholder="0–100">
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EQ -->
+    <div class="col-12">
+      <div class="card border-0 bg-light">
+        <div class="card-header bg-transparent fw-semibold">Emotional Intelligence <span class="text-muted fw-normal small">(0–100)</span></div>
+        <div class="card-body">
+          <div class="row g-2">
+            {% for field, label in [('eq_perceiving','Perceiving'),('eq_using','Using'),
+                                     ('eq_understanding','Understanding'),('eq_managing','Managing')] %}
+            <div class="col-sm-3">
+              <label class="form-label small mb-1">{{ label }}</label>
+              <input type="number" name="{{ field }}" class="form-control form-control-sm" min="0" max="100"
+                     value="{{ snapshot[field] if snapshot and snapshot[field] is not none else '' }}" placeholder="0–100">
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attachment -->
+    <div class="col-12">
+      <div class="card border-0 bg-light">
+        <div class="card-header bg-transparent fw-semibold">Attachment Tendencies <span class="text-muted fw-normal small">(optional; if all four entered must sum to 100 ± 1)</span></div>
+        <div class="card-body">
+          <div class="row g-2">
+            {% for field, label in [('attachment_secure','Secure'),('attachment_anxious','Anxious'),
+                                     ('attachment_avoidant','Avoidant'),('attachment_fearful','Fearful')] %}
+            <div class="col-sm-3">
+              <label class="form-label small mb-1">{{ label }}</label>
+              <input type="number" name="{{ field }}" class="form-control form-control-sm" min="0" max="100"
+                     value="{{ snapshot[field] if snapshot and snapshot[field] is not none else '' }}" placeholder="0–100">
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <label class="form-label fw-semibold">Notes</label>
+      <textarea name="notes" class="form-control" rows="2">{{ snapshot.notes if snapshot and snapshot.notes else '' }}</textarea>
+    </div>
+
+    <div class="col-12 d-flex gap-2">
+      <button type="submit" class="btn btn-primary">{% if snapshot %}Save Changes{% else %}Save Assessment{% endif %}</button>
+      <a href="{% if snapshot %}/people/{{ snapshot.person_id }}{% else %}/people/{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

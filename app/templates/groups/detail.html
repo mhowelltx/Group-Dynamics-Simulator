@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ group.id }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <a href="/groups/" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0">{{ group.id }}</h4>
+  <span class="badge bg-secondary ms-2">{{ group.type }}</span>
+  <div class="ms-auto">
+    <a href="/groups/{{ group.id }}/edit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Context</div>
+      <div class="card-body">
+        <dl class="mb-0">
+          <dt>Structure</dt><dd>{{ group.structure }}</dd>
+          <dt>Stress Level</dt>
+          <dd>
+            <span class="badge {% if group.stress_level >= 4 %}bg-danger{% elif group.stress_level >= 3 %}bg-warning text-dark{% else %}bg-success{% endif %}">
+              {{ group.stress_level }} / 5
+            </span>
+          </dd>
+          {% if group.role_clarity is not none %}<dt>Role Clarity</dt><dd>{{ group.role_clarity }} / 100</dd>{% endif %}
+          <dt>Shared Goals</dt><dd>{{ group.shared_goals }}</dd>
+          {% if group.norms_explicit %}<dt>Explicit Norms</dt><dd>{{ group.norms_explicit }}</dd>{% endif %}
+          {% if group.norms_implicit %}<dt>Implicit Norms</dt><dd>{{ group.norms_implicit }}</dd>{% endif %}
+          {% if group.decision_rules %}<dt>Decision Rules</dt><dd>{{ group.decision_rules }}</dd>{% endif %}
+          {% if group.conflict_history %}<dt>Conflict History</dt><dd>{{ group.conflict_history }}</dd>{% endif %}
+          {% if group.cultural_context %}<dt>Cultural Context</dt><dd>{{ group.cultural_context }}</dd>{% endif %}
+          {% if group.environmental_constraints %}<dt>Constraints</dt><dd>{{ group.environmental_constraints }}</dd>{% endif %}
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Members ({{ member_ids | length }})</div>
+      <div class="card-body">
+        {% if member_ids %}
+        <div class="d-flex flex-wrap gap-2">
+          {% for mid in member_ids %}
+          <a href="/people/{{ mid }}" class="badge bg-primary text-decoration-none">{{ mid }}</a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <span class="text-muted">No members assigned. <a href="/groups/{{ group.id }}/edit">Edit group</a> to add members.</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mt-3">
+      <div class="card-header bg-white fw-semibold">Run a Simulation</div>
+      <div class="card-body">
+        <p class="small text-muted mb-2">Start a simulation run using this group's members and a scenario.</p>
+        <a href="/simulations/new?group_id={{ group.id }}" class="btn btn-danger btn-sm">
+          <i class="bi bi-play-circle me-1"></i>New Simulation Run
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

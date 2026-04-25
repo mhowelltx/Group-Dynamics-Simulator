@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Simulation Runs{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0"><i class="bi bi-play-circle me-2"></i>Simulation Runs</h4>
+  <a href="/simulations/new" class="btn btn-danger btn-sm"><i class="bi bi-play-circle me-1"></i>New Run</a>
+</div>
+
+{% if runs %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 small">
+      <thead class="table-light">
+        <tr>
+          <th>Run ID</th><th>Group</th><th>Scenario</th><th>Config Version</th>
+          <th>Status</th><th>Rubric Avg</th><th>Date</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in runs %}
+        <tr>
+          <td><a href="/simulations/{{ run.id }}" class="font-monospace text-decoration-none small">{{ run.id }}</a></td>
+          <td><a href="/groups/{{ run.group_id }}" class="small">{{ run.group_id }}</a></td>
+          <td><a href="/scenarios/{{ run.scenario_id }}" class="small">{{ run.scenario_id }}</a></td>
+          <td><span class="badge bg-dark">{{ run.simulation_config.prompt_version_key }}</span></td>
+          <td>
+            {% if run.status == 'complete' %}<span class="badge bg-success">complete</span>
+            {% elif run.status == 'failed_guardrail' %}<span class="badge bg-danger">guardrail fail</span>
+            {% elif run.status == 'running' %}<span class="badge bg-warning text-dark">running</span>
+            {% elif run.status == 'failed' %}<span class="badge bg-danger">failed</span>
+            {% else %}<span class="badge bg-secondary">{{ run.status }}</span>{% endif %}
+          </td>
+          <td>
+            {% if run.eval_rubric_average %}<span class="fw-bold">{{ run.eval_rubric_average }}</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td class="text-muted">{{ run.generated_at_utc.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td class="text-end">
+            <a href="/simulations/{{ run.id }}" class="btn btn-outline-secondary btn-sm py-0"><i class="bi bi-eye"></i></a>
+            <form action="/simulations/{{ run.id }}/delete" method="post" class="d-inline"
+                  onsubmit="return confirm('Delete run {{ run.id }}?')">
+              <button type="submit" class="btn btn-outline-danger btn-sm py-0"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">No simulation runs yet. <a href="/simulations/new">Start a run</a>.</div>
+{% endif %}
+{% endblock %}

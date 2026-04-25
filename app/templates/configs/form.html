@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}New Simulation Config{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <a href="/configs/" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0">New Simulation Config</h4>
+</div>
+
+{% if errors %}
+<div class="alert alert-danger">
+  <ul class="mb-0">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<div class="card border-0 shadow-sm" style="max-width:600px">
+  <div class="card-body">
+    <form method="post" action="/configs/new">
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Prompt Version Key <span class="text-danger">*</span></label>
+        <input type="text" name="prompt_version_key" class="form-control font-monospace"
+               value="{{ config.prompt_version_key if config else 'P1.1' }}"
+               pattern="P[0-9]+\.[0-9]+" placeholder="P1.1" required>
+        <div class="form-text">Format: P&lt;major&gt;.&lt;minor&gt; e.g. P1.1, P2.0</div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Simulation Passes</label>
+          <input type="number" name="passes" class="form-control" min="1" max="10"
+                 value="{{ config.passes if config else 1 }}">
+          <div class="form-text">1–10</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Randomness</label>
+          <select name="randomness" class="form-select">
+            {% for v in ['low','medium','high'] %}
+            <option value="{{ v }}" {% if config and config.randomness == v %}selected{% elif not config and v == 'medium' %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Depth</label>
+          <select name="depth" class="form-select">
+            {% for v in ['surface','standard','deep'] %}
+            <option value="{{ v }}" {% if config and config.depth == v %}selected{% elif not config and v == 'standard' %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Report Detail Level</label>
+          <select name="report_detail_level" class="form-select">
+            {% for v in ['summary','standard','full'] %}
+            <option value="{{ v }}" {% if config and config.report_detail_level == v %}selected{% elif not config and v == 'standard' %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Intervention Mode</label>
+          <select name="intervention_mode" class="form-select">
+            {% for v in ['baseline','compare'] %}
+            <option value="{{ v }}" {% if config and config.intervention_mode == v %}selected{% elif not config and v == 'baseline' %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Evidence Strictness</label>
+          <select name="evidence_strictness" class="form-select">
+            {% for v in ['strict','moderate','lenient'] %}
+            <option value="{{ v }}" {% if config and config.evidence_strictness == v %}selected{% elif not config and v == 'moderate' %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Guardrail Verbosity</label>
+          <select name="guardrail_verbosity" class="form-select">
+            {% for v in ['minimal','standard','verbose'] %}
+            <option value="{{ v }}" {% if config and config.guardrail_verbosity == v %}selected{% elif not config and v == 'standard' %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="dialogue_enabled" value="true"
+                   id="dia_en" {% if config and config.dialogue_enabled %}checked{% endif %}>
+            <label class="form-check-label" for="dia_en">Dialogue enabled</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Create Config</button>
+        <a href="/configs/" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Scenarios{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0"><i class="bi bi-layers me-2"></i>Scenarios</h4>
+  <a href="/scenarios/new" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>New Scenario</a>
+</div>
+
+{% if scenarios %}
+<div class="row g-3">
+  {% for s in scenarios %}
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <h6 class="card-title mb-1"><a href="/scenarios/{{ s.id }}" class="text-decoration-none">{{ s.title }}</a></h6>
+          <span class="badge bg-secondary ms-2">{{ s.type }}</span>
+        </div>
+        <div class="font-monospace small text-muted mb-2">{{ s.id }}</div>
+        <p class="card-text small text-muted mb-2">{{ s.trigger_event[:120] }}{% if s.trigger_event | length > 120 %}…{% endif %}</p>
+        <div class="d-flex gap-1 flex-wrap small">
+          <span class="badge bg-light text-dark border" title="Stakes">Stakes {{ s.stakes_level }}</span>
+          <span class="badge bg-light text-dark border" title="Emotional Intensity">EI {{ s.emotional_intensity }}</span>
+          <span class="badge bg-light text-dark border" title="Ambiguity">Ambig {{ s.ambiguity_level }}</span>
+          <span class="badge bg-light text-dark border" title="Time Pressure">TP {{ s.time_pressure }}</span>
+          {% if s.public_visibility %}<span class="badge bg-info text-dark">public</span>{% endif %}
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-0 text-end pt-0">
+        <a href="/scenarios/{{ s.id }}/edit" class="btn btn-outline-secondary btn-sm py-0 me-1"><i class="bi bi-pencil"></i></a>
+        <form action="/scenarios/{{ s.id }}/delete" method="post" class="d-inline"
+              onsubmit="return confirm('Delete scenario {{ s.id }}?')">
+          <button type="submit" class="btn btn-outline-danger btn-sm py-0"><i class="bi bi-trash"></i></button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">No scenarios yet. <a href="/scenarios/new">Create the first scenario</a>.</div>
+{% endif %}
+{% endblock %}

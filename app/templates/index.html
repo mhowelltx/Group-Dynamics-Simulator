@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Group Dynamics Simulator{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0"><i class="bi bi-house me-2"></i>Dashboard</h4>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <div class="fs-2 me-3 text-primary"><i class="bi bi-people"></i></div>
+          <div>
+            <div class="fs-4 fw-bold">{{ stats.people }}</div>
+            <div class="text-muted small">People</div>
+          </div>
+        </div>
+        <a href="/people/" class="stretched-link"></a>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <div class="fs-2 me-3 text-success"><i class="bi bi-collection"></i></div>
+          <div>
+            <div class="fs-4 fw-bold">{{ stats.groups }}</div>
+            <div class="text-muted small">Groups</div>
+          </div>
+        </div>
+        <a href="/groups/" class="stretched-link"></a>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <div class="fs-2 me-3 text-warning"><i class="bi bi-layers"></i></div>
+          <div>
+            <div class="fs-4 fw-bold">{{ stats.scenarios }}</div>
+            <div class="text-muted small">Scenarios</div>
+          </div>
+        </div>
+        <a href="/scenarios/" class="stretched-link"></a>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <div class="fs-2 me-3 text-danger"><i class="bi bi-play-circle"></i></div>
+          <div>
+            <div class="fs-4 fw-bold">{{ stats.runs }}</div>
+            <div class="text-muted small">Simulation Runs</div>
+          </div>
+        </div>
+        <a href="/simulations/" class="stretched-link"></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Recent Simulation Runs</div>
+      <div class="card-body p-0">
+        {% if recent_runs %}
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Run ID</th><th>Group</th><th>Scenario</th><th>Status</th><th>Rubric Avg</th><th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for run in recent_runs %}
+            <tr>
+              <td><a href="/simulations/{{ run.id }}" class="text-decoration-none font-monospace small">{{ run.id[:20] }}…</a></td>
+              <td class="small">{{ run.group_id }}</td>
+              <td class="small">{{ run.scenario_id }}</td>
+              <td>
+                {% if run.status == 'complete' %}<span class="badge bg-success">complete</span>
+                {% elif run.status == 'failed_guardrail' %}<span class="badge bg-danger">guardrail fail</span>
+                {% elif run.status == 'running' %}<span class="badge bg-warning text-dark">running</span>
+                {% else %}<span class="badge bg-secondary">{{ run.status }}</span>{% endif %}
+              </td>
+              <td>{% if run.eval_rubric_average %}<span class="fw-bold">{{ run.eval_rubric_average }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+              <td class="small text-muted">{{ run.generated_at_utc.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="text-muted p-3">No runs yet. <a href="/simulations/new">Start a simulation</a>.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Quick Start</div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="/people/new" class="btn btn-outline-primary btn-sm"><i class="bi bi-person-plus me-1"></i>Add Person</a>
+          <a href="/groups/new" class="btn btn-outline-success btn-sm"><i class="bi bi-collection me-1"></i>Create Group</a>
+          <a href="/scenarios/new" class="btn btn-outline-warning btn-sm"><i class="bi bi-layers me-1"></i>New Scenario</a>
+          <a href="/configs/new" class="btn btn-outline-secondary btn-sm"><i class="bi bi-sliders me-1"></i>New Sim Config</a>
+          <a href="/simulations/new" class="btn btn-danger btn-sm"><i class="bi bi-play-circle me-1"></i>Run Simulation</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mt-3">
+      <div class="card-header bg-white fw-semibold">Ethical Note</div>
+      <div class="card-body small text-muted">
+        <p>Personal use only. Not a clinical, hiring, or legal tool.</p>
+        <p class="mb-0">All outputs carry confidence ratings and limitation warnings. Outputs are simulations, not predictions.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

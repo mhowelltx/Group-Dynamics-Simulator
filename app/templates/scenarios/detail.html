@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{{ scenario.title }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <a href="/scenarios/" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0">{{ scenario.title }}</h4>
+  <span class="badge bg-secondary ms-2">{{ scenario.type }}</span>
+  <div class="ms-auto">
+    <a href="/scenarios/{{ scenario.id }}/edit" class="btn btn-outline-secondary btn-sm me-1"><i class="bi bi-pencil me-1"></i>Edit</a>
+    <a href="/simulations/new?scenario_id={{ scenario.id }}" class="btn btn-danger btn-sm"><i class="bi bi-play-circle me-1"></i>Run</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Scenario Parameters</div>
+      <div class="card-body">
+        <dl class="mb-0">
+          <dt>ID</dt><dd class="font-monospace small">{{ scenario.id }}</dd>
+          <dt>Stakes Level</dt><dd>{{ scenario.stakes_level }} / 5</dd>
+          <dt>Emotional Intensity</dt><dd>{{ scenario.emotional_intensity }} / 5</dd>
+          <dt>Ambiguity Level</dt><dd>{{ scenario.ambiguity_level }} / 5</dd>
+          <dt>Time Pressure</dt><dd>{{ scenario.time_pressure }} / 5</dd>
+          <dt>Public Visibility</dt><dd>{{ 'Yes' if scenario.public_visibility else 'No' }}</dd>
+          {% if scenario.group_id %}<dt>Group</dt><dd><a href="/groups/{{ scenario.group_id }}">{{ scenario.group_id }}</a></dd>{% endif %}
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">Trigger & Decision</div>
+      <div class="card-body small">
+        <strong>Trigger Event:</strong>
+        <p>{{ scenario.trigger_event }}</p>
+        <strong>Required Decision:</strong>
+        <p>{{ scenario.required_decision }}</p>
+        {% if scenario.resource_constraints %}<strong>Resource Constraints:</strong><p>{{ scenario.resource_constraints }}</p>{% endif %}
+        <div class="row">
+          <div class="col-md-6"><strong>Success Criteria:</strong><p>{{ scenario.success_criteria }}</p></div>
+          <div class="col-md-6"><strong>Failure Consequences:</strong><p>{{ scenario.failure_consequences }}</p></div>
+        </div>
+      </div>
+    </div>
+
+    {% if scenario.known_facts or scenario.uncertain_facts or scenario.intervention_options %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Facts & Interventions</div>
+      <div class="card-body small">
+        <div class="row g-2">
+          {% if scenario.known_facts %}
+          <div class="col-md-4">
+            <strong>Known Facts</strong>
+            <ul class="mb-0 ps-3">{% for f in scenario.known_facts %}<li>{{ f }}</li>{% endfor %}</ul>
+          </div>
+          {% endif %}
+          {% if scenario.uncertain_facts %}
+          <div class="col-md-4">
+            <strong>Uncertain Facts</strong>
+            <ul class="mb-0 ps-3">{% for f in scenario.uncertain_facts %}<li>{{ f }}</li>{% endfor %}</ul>
+          </div>
+          {% endif %}
+          {% if scenario.intervention_options %}
+          <div class="col-md-4">
+            <strong>Intervention Options</strong>
+            <ul class="mb-0 ps-3">{% for f in scenario.intervention_options %}<li>{{ f }}</li>{% endfor %}</ul>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

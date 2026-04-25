@@ -204,23 +204,22 @@ When starting a new session on this project:
 
 Use this section at the **end of every work session** to leave clear continuity for the next session.
 
-- **Current milestone**: Phase 2 core platform buildout (schema + API + validation + prompt assembly service).
-- **Last completed task ID**: Phase 1 closeout and Phase 2 kickoff alignment update (`PLAN.md` now marks Phase 2 current).
+- **Current milestone**: Phase 2 Week 1 Foundation — complete. App boots, all routes return 200, integration tests pass.
+- **Last completed task ID**: Full Phase 2 foundation build — models, schemas, routers, validation service, prompt builder, templates, main app. Branch: `claude/implement-phase-2-gy89c`.
 - **Next 3 concrete tasks**:
-  1. Implement canonical DB schema for `Person`, `AssessmentSnapshot`, `RelationshipEdge`, `GroupContext`, `Scenario`, `SimulationConfig`, and `SimulationRun`.
-  2. Implement API CRUD surfaces for core entities with contract-aligned request/response shapes.
-  3. Implement validation and prompt-assembly service with explicit `prompt_version_key` handling and run-lineage capture.
+  1. Add Phase 1 xlsx import CLI (`scripts/import_phase1.py`) that reads the spreadsheet and calls the validation layer before writing to the SQLite DB.
+  2. Add run history filtering UI (filter by group, scenario, prompt version key) to `/simulations/` list view.
+  3. Add integration test suite (`tests/`) covering: entity CRUD, validation sum checks, prompt builder determinism, and run lifecycle.
 - **Known blockers**:
-  - Stack lock decision pending (backend/web framework + DB migration tooling) before deep implementation can proceed.
-  - Auth boundary for personal-use MVP still needs explicit decision to avoid rework in API middleware.
-  - Migration approach from Phase 1 spreadsheet artifacts to canonical DB records is not finalized.
+  - Auth boundary for personal-use MVP: currently none (localhost only). Confirm this is acceptable before adding any network exposure.
+  - Migration approach from Phase 1 xlsx to canonical DB not yet implemented (import CLI is next task).
 - **Open decisions with owner/date**:
 
 | Decision | Owner | Target date | Status |
 |---|---|---|---|
-| Lock Phase 2 implementation stack (API framework, UI framework, DB tooling) | Project owner | 2026-04-30 | Open |
-| Define MVP auth model (none/local-only/basic account) | Project owner | 2026-04-30 | Open |
-| Confirm migration path from spreadsheet artifacts to canonical schema | Project owner | 2026-05-02 | Open |
+| Lock Phase 2 implementation stack (API framework, UI framework, DB tooling) | Project owner | 2026-04-25 | ✅ Resolved — FastAPI + SQLite + Jinja2 |
+| Define MVP auth model (none/local-only/basic account) | Project owner | 2026-04-30 | Open — currently no auth (localhost only) |
+| Confirm migration path from spreadsheet artifacts to canonical schema | Project owner | 2026-05-02 | Open — import CLI is next task |
 | Finalize test strategy (unit/integration/e2e + simulation contract tests) | Project owner | 2026-05-03 | Open |
 
 ### End-of-Session Update Checklist (<= 5 minutes)

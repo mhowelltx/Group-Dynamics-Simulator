@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}{% if group %}Edit Group{% else %}New Group{% endif %}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <a href="/groups/" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0">{% if group %}Edit {{ group.id }}{% else %}New Group{% endif %}</h4>
+</div>
+
+{% if errors %}
+<div class="alert alert-danger">
+  <ul class="mb-0">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<div class="card border-0 shadow-sm" style="max-width:720px">
+  <div class="card-body">
+    <form method="post" action="{% if group %}/groups/{{ group.id }}/edit{% else %}/groups/new{% endif %}">
+
+      {% if not group %}
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Group ID <span class="text-danger">*</span></label>
+        <input type="text" name="id" class="form-control font-monospace" placeholder="e.g. alpha-leadership-team"
+               pattern="[a-z0-9._\-]{3,64}" required>
+        <div class="form-text">Lowercase slug (3–64 chars).</div>
+      </div>
+      {% endif %}
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Type</label>
+          <select name="type" class="form-select">
+            {% for t in ['team','leadership_team','project_team','board','other'] %}
+            <option value="{{ t }}" {% if group and group.type == t %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Structure</label>
+          <select name="structure" class="form-select">
+            {% for s in ['formal','informal','hybrid'] %}
+            <option value="{{ s }}" {% if group and group.structure == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Shared Goals <span class="text-danger">*</span></label>
+        <textarea name="shared_goals" class="form-control" rows="3" required>{{ group.shared_goals if group else '' }}</textarea>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Explicit Norms</label>
+          <textarea name="norms_explicit" class="form-control" rows="2">{{ group.norms_explicit if group and group.norms_explicit else '' }}</textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Implicit Norms</label>
+          <textarea name="norms_implicit" class="form-control" rows="2">{{ group.norms_implicit if group and group.norms_implicit else '' }}</textarea>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Decision Rules</label>
+          <textarea name="decision_rules" class="form-control" rows="2">{{ group.decision_rules if group and group.decision_rules else '' }}</textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Conflict History</label>
+          <textarea name="conflict_history" class="form-control" rows="2">{{ group.conflict_history if group and group.conflict_history else '' }}</textarea>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Stress Level <span class="text-danger">*</span></label>
+          <input type="number" name="stress_level" class="form-control" min="1" max="5"
+                 value="{{ group.stress_level if group else 3 }}" required>
+          <div class="form-text">1 (low) to 5 (high)</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Role Clarity</label>
+          <input type="number" name="role_clarity" class="form-control" min="0" max="100"
+                 value="{{ group.role_clarity if group and group.role_clarity is not none else '' }}" placeholder="0–100">
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Cultural Context</label>
+          <input type="text" name="cultural_context" class="form-control"
+                 value="{{ group.cultural_context if group and group.cultural_context else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Environmental Constraints</label>
+          <input type="text" name="environmental_constraints" class="form-control"
+                 value="{{ group.environmental_constraints if group and group.environmental_constraints else '' }}">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Members</label>
+        <div class="border rounded p-2" style="max-height:200px;overflow-y:auto">
+          {% for p in people %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="member_ids" value="{{ p.id }}"
+                   id="m_{{ p.id }}" {% if p.id in member_ids %}checked{% endif %}>
+            <label class="form-check-label small" for="m_{{ p.id }}">{{ p.display_name }} ({{ p.role }})</label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">{% if group %}Save Changes{% else %}Create Group{% endif %}</button>
+        <a href="{% if group %}/groups/{{ group.id }}{% else %}/groups/{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}People{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0"><i class="bi bi-people me-2"></i>People</h4>
+  <a href="/people/new" class="btn btn-primary btn-sm"><i class="bi bi-person-plus me-1"></i>Add Person</a>
+</div>
+
+{% if people %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th><th>Name</th><th>Role</th><th>Group</th><th>Authority</th><th>Active</th><th>Assessments</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in people %}
+        <tr>
+          <td class="font-monospace small text-muted">{{ p.id }}</td>
+          <td><a href="/people/{{ p.id }}">{{ p.display_name }}</a></td>
+          <td><span class="badge bg-secondary">{{ p.role }}</span></td>
+          <td class="small">{{ p.group_membership }}</td>
+          <td><span class="badge bg-light text-dark border">L{{ p.authority_level }}</span></td>
+          <td>
+            {% if p.is_active %}<span class="badge bg-success">active</span>
+            {% else %}<span class="badge bg-secondary">inactive</span>{% endif %}
+          </td>
+          <td class="small">{{ p.assessments | length }}</td>
+          <td class="text-end">
+            <a href="/people/{{ p.id }}/edit" class="btn btn-outline-secondary btn-sm py-0"><i class="bi bi-pencil"></i></a>
+            <form action="/people/{{ p.id }}/delete" method="post" class="d-inline"
+                  onsubmit="return confirm('Delete {{ p.display_name }}?')">
+              <button type="submit" class="btn btn-outline-danger btn-sm py-0"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">No people yet. <a href="/people/new">Add the first person</a>.</div>
+{% endif %}
+{% endblock %}
