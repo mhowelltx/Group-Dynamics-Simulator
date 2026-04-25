@@ -28,6 +28,12 @@ Expected output file:
 
 `workbook/group-dynamics-simulator-phase1.xlsx`
 
+The generated workbook includes Gate A–D support tabs:
+- `Gate-A-Validation-Log`
+- `Gate-B-Validation-Log`
+- `Gate-C-Determinism-Log`
+- `Gate-D-Run-Log`
+
 ## Run Phase 1.10 prompt trial artifacts
 
 Generate deterministic prompt trial artifacts for:
