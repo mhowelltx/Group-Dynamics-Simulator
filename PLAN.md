@@ -1,7 +1,7 @@
 # Group Dynamics Simulator — Implementation Plan
 
-**Last updated**: 2026-04-24
-**Current phase**: Phase 1 — Spreadsheet Prototype ✅ Complete
+**Last updated**: 2026-04-25
+**Current phase**: Phase 2 — Web Application (In Progress)
 **Design reference**: `Goup Dynamics Simulator - High-Level System Design.md`
 
 ---
@@ -719,67 +719,43 @@ Use this checklist to confirm Gate A is complete before beginning Gate B.
 
 ## Phase 2 — Web Application
 
-**Prerequisite**: Phase 1 prompt model validated. Clear understanding of data model, prompt structure, and output format.
+**Objective**: Operationalize the frozen Phase 1 contract artifacts (Field Dictionary, Mapping Doc, Scoring Spec, Prompt Contract, and Validation Rules) into a production web application without changing canonical field semantics. Phase 2 implementation must preserve the Phase 1 stable IDs (`person.*`, `rel.*`, `group.*`, `scenario.*`, `sim.*`, `eval.*`) as the source of truth for database columns, API payloads, prompt assembly, and rubric-scored run outputs so spreadsheet-era data can be imported and validated with no contract ambiguity.
 
-**Goal**: Replace the spreadsheet with a proper web application backed by a database. Users can manage multiple groups, scenarios, and simulation runs through a UI.
+### Milestones (Weekly Targets)
 
-**Recommended stack** (to be confirmed before build):
-- Backend: Python / FastAPI
-- Database: PostgreSQL (with SQLAlchemy ORM)
-- Frontend: React + TypeScript (Vite)
-- AI integration: Anthropic Claude API (claude-opus-4-7 or claude-sonnet-4-6)
-- Visualization: D3.js or Recharts
+| Week | Milestone | Target outcomes |
+|---|---|---|
+| Week 1 | Foundation | Repository scaffolding, environment bootstrapping, auth baseline (if in scope), and initial PostgreSQL schema migration generated directly from the frozen contract IDs. |
+| Week 2 | CRUD | API + UI CRUD flows for People, Relationships, Group Context, Scenarios, and Simulation Config; OpenAPI docs and basic integration tests in CI. |
+| Week 3 | Validation | Server-side validation parity with Phase 1 rules (ranges, enum constraints, sum checks, referential checks), import preflight checks, and error reporting for contract violations. |
+| Week 4 | Prompt/Run Logging | Prompt builder service using `sim.prompt_version_key`; run creation endpoint; pass-level logging; persisted prompt/run lineage and timestamps. |
+| Week 5 | Results UX | Run history interface, rubric entry/workflow, scored output views, and searchable scenario/run timeline for analyst review. |
+| Week 6 | Hardening | Regression suite, migration dry-runs from spreadsheet exports, performance tuning, observability, and release-readiness sign-off. |
 
-### Phase 2 Tasks (High Level — Detail when Phase 1 complete)
+### Deliverables
 
-#### 2.1 — Architecture & Setup
-- [ ] Confirm tech stack
-- [ ] Design database schema (mapped from spreadsheet data model)
-- [ ] Set up project scaffolding (backend, frontend, database)
-- [ ] Set up local development environment
-- [ ] Define API contract (OpenAPI spec)
+- [ ] **Database schema** mapped from canonical namespaces: `person.*`, `rel.*`, `group.*`, `scenario.*`, `sim.*`, `eval.*`, including keys, constraints, and migration files.
+- [ ] **API endpoints** for CRUD across canonical entities plus simulation-run creation (`POST /simulation-runs`) with contract-valid payloads.
+- [ ] **Prompt builder service** that composes structured model prompts from persisted records and uses `sim.prompt_version_key` as a required version/provenance anchor.
+- [ ] **Run history + rubric scoring** persistence and UX, including evaluator capture for `eval.evidence_anchoring_score`, `eval.internal_consistency_score`, `eval.plausibility_score`, `eval.intervention_usefulness_score`, `eval.uncertainty_quality_score`, computed `eval.rubric_average_score`, and notes.
 
-#### 2.2 — Core Data Model Implementation
-- [ ] Person Profile CRUD (API + UI)
-- [ ] Relationship Matrix CRUD (API + UI)
-- [ ] Group Profile CRUD (API + UI)
-- [ ] Scenario Profile CRUD (API + UI)
-- [ ] Simulation Config CRUD (API + UI)
+### Exit Criteria (Definition of Done)
 
-#### 2.3 — Assessment Administration
-- [ ] Big Five assessment form (per person)
-- [ ] Conflict Style assessment form (per person)
-- [ ] Psychological Safety survey (group)
-- [ ] Communication & Decision Style form (per person)
-- [ ] Score computation and normalization
-- [ ] Evidence source and confidence tracking
+- [ ] 100% of required Phase 1 frozen IDs needed for MVP (`person.*`, `rel.*`, `group.*`, `scenario.*`, `sim.*`, `eval.*`) are represented in schema and exposed through typed API contracts.
+- [ ] Contract validation parity is demonstrably implemented for critical rules: enum bounds, numeric ranges, conflict-style sum tolerance, attachment sum tolerance when complete, and relationship self-edge prevention.
+- [ ] Spreadsheet import path validates and ingests at least one full Phase 1 sample dataset with **zero unmapped required fields** and explicit reporting for optional omissions.
+- [ ] End-to-end simulation lifecycle works in app: create/update entities → create run → build prompt from versioned config → store run/pass outputs → capture rubric scores.
+- [ ] Run history UI supports filtering by group, scenario, date, and prompt version key, and shows rubric averages for completed evaluations.
+- [ ] Automated checks (unit + integration + migration checks) pass in CI for the release candidate branch.
 
-#### 2.4 — Simulation Engine
-- [ ] Prompt assembly service (takes DB records → structured prompt)
-- [ ] Claude API integration (multi-pass simulation runner)
-- [ ] Evaluator pass integration
-- [ ] Simulation output parser and storage
-- [ ] Run history and versioning
+### Dependencies & Risks
 
-#### 2.5 — Report Generation
-- [ ] Report template engine (sections from design doc)
-- [ ] Probability-weighted outcome cluster display
-- [ ] Individual behavior forecast display
-- [ ] Intervention recommendation section
-- [ ] Limitations and ethics warning section
-- [ ] Export to PDF/Markdown
-
-#### 2.6 — Visualization
-- [ ] Relationship network graph (D3.js force-directed)
-- [ ] Trust/conflict heat map
-- [ ] Influence ranking chart
-- [ ] OCEAN radar chart per person
-- [ ] Outcome cluster probability chart
-
-#### 2.7 — Intervention Lab (Phase 2 stretch)
-- [ ] Baseline vs. intervention comparison runner
-- [ ] Intervention option selector
-- [ ] Side-by-side outcome comparison view
+- **Schema drift risk**: Web schema could diverge from frozen Phase 1 stable IDs.
+  - Mitigation: Generate/verify mappings from contract IDs; add CI check that required IDs remain represented and unchanged.
+- **Prompt-version drift risk**: Prompt templates or runtime instructions may change without synchronized `sim.prompt_version_key` discipline.
+  - Mitigation: Enforce version key requirement on run creation; store prompt payload + version linkage for every run.
+- **Import compatibility risk**: Spreadsheet exports may contain legacy formatting, missing optional fields, or stale enum values.
+  - Mitigation: Build import preflight validator with actionable errors, normalization adapters, and explicit backward-compatibility rules.
 
 ---
 
