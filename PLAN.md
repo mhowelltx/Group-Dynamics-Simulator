@@ -693,13 +693,13 @@ Use this checklist to confirm Gate A is complete before beginning Gate B.
 - [x] **Visuals tab**: Relationship trust heat map (matrix visualization using conditional formatting), Influence map (sorted bar chart), OCEAN radar charts per person, Conflict style stacked bar per person, Outcome cluster distribution chart (manual input from simulation log). Scaffold + implementation notes added. — `scripts/build_workbook.py`
 
 #### 1.10 — Prompt Engineering
-- [ ] Draft System Role prompt for the simulator agent
-- [ ] Draft Person Profile block template (one block per person)
-- [ ] Draft Relationship block template
-- [ ] Draft Group Context block template
-- [ ] Draft Scenario block template
-- [ ] Draft Output Format instructions block (aligned with Simulation Output Object schema)
-- [ ] Draft Evaluator prompt rubric with numeric scores (1–5) for evidence anchoring, internal consistency, plausibility, intervention usefulness, and uncertainty quality
+- [x] Draft System Role prompt for the simulator agent — `scripts/build_workbook.py` (Prompt Inputs section)
+- [x] Draft Person Profile block template (one block per person) — `scripts/build_workbook.py` (Prompt Inputs section)
+- [x] Draft Relationship block template — `scripts/build_workbook.py` (Prompt Inputs section)
+- [x] Draft Group Context block template — `scripts/build_workbook.py` (Prompt Inputs section)
+- [x] Draft Scenario block template — `scripts/build_workbook.py` (Prompt Inputs section)
+- [x] Draft Output Format instructions block (aligned with Simulation Output Object schema) — `scripts/build_workbook.py` (Prompt Inputs section)
+- [x] Draft Evaluator prompt rubric with numeric scores (1–5) for evidence anchoring, internal consistency, plausibility, intervention usefulness, and uncertainty quality — `scripts/build_workbook.py` (Prompt Inputs section)
 - [ ] Test prompt with synthetic team data (3-person team, simple scenario)
 - [ ] Test prompt with realistic team data (5–8 person team, complex scenario)
 - [ ] Iterate until output structure is consistent and evidence-anchored

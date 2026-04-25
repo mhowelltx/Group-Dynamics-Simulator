@@ -193,12 +193,12 @@ When starting a new session on this project:
 
 Use this section at the **end of every work session** to leave clear continuity for the next session.
 
-- **Current milestone**: Gate C — Prompt assembly and logging tabs implemented (`Structured Profile Output`, `Prompt Inputs`, `Simulation Output Log`, `Visuals`) in workbook build script; pending deterministic prompt validation and manual workbook QA.
-- **Last completed task ID**: 1.9 (Gate C workbook scaffolding implemented in `scripts/build_workbook.py`; workbook at `workbook/group-dynamics-simulator-phase1.xlsx`)
+- **Current milestone**: Phase 1.10 prompt engineering templates drafted in `Prompt Inputs`; pending simulation trial runs and rubric-based iteration.
+- **Last completed task ID**: 1.10.a-g (system role + block templates + output contract + evaluator rubric prompt scaffolding implemented in `scripts/build_workbook.py`)
 - **Next 3 concrete tasks**:
-  1. Run Gate B+Gate C integration checks in `workbook/group-dynamics-simulator-phase1.xlsx`: relationship self-link rejection, range validations, enum validations, and prompt/log formulas.
-  2. Execute Gate C determinism QA (>=3 consecutive exports with unchanged data) and record outcomes in `PLAN.md` run notes.
-  3. Begin Prompt Engineering task 1.10 using the generated prompt block and rubric scoring loop.
+  1. Test prompt with synthetic 3-person scenario and score output with rubric in Simulation Output Log.
+  2. Test prompt with realistic 5–8 person scenario and compare rubric average vs baseline prompt version.
+  3. Record run outcomes in `PLAN.md` Run Ledger and promote/adjust prompt version key if improvement criteria are met.
 - **Known blockers**:
   - Manual workbook validation still required (open the .xlsx, check formulas evaluate correctly, confirm conditional formatting and list validations fire on bad data).
   - Gate C DoD evidence (determinism log + checklist) not yet recorded in `PLAN.md`.
