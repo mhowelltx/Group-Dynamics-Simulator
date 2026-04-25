@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Gate A/B workbook builder for the Group Dynamics Simulator.
+Gate A/B/C workbook builder for the Group Dynamics Simulator.
 
-Creates an Excel workbook (.xlsx) with Gate A and Gate B tabs, pre-filled
+Creates an Excel workbook (.xlsx) with Gate A, Gate B, and Gate C tabs, pre-filled
 with the 5-person Alpha Leadership Team synthetic dataset defined in PLAN.md.
 
 Run:   python3 scripts/build_workbook.py
@@ -20,7 +20,7 @@ from openpyxl.workbook.defined_name import DefinedName
 
 # ── Version & date ────────────────────────────────────────────────────────────
 
-VERSION = "phase1_gateB_v1"
+VERSION = "phase1_gateC_v1"
 TODAY   = datetime.date.today().isoformat()
 
 # ── Synthetic dataset ─────────────────────────────────────────────────────────
@@ -729,6 +729,193 @@ def build_simulation_config(ws):
     _add_dv_list(ws, "B11:B11", "minimal,standard,verbose")
 
 
+def build_structured_profile_output(ws):
+    headers = [
+        ("PersonID", 14),
+        ("DisplayName", 18),
+        ("Role", 12),
+        ("OCEAN Summary", 42),
+        ("Dominant Conflict Mode", 20),
+        ("Communication Pattern", 28),
+        ("Decision Pattern", 28),
+        ("EQ Summary", 20),
+        ("Attachment Tendency", 20),
+        ("Confidence", 12),
+        ("Missing Data", 12),
+    ]
+    for col, (text, width) in enumerate(headers, 1):
+        _h(ws, 1, col, text, width)
+
+    ws.row_dimensions[1].height = 24
+
+    for r in range(2, 7):
+        _d(ws, r, 1, f'=People!A{r}')
+        _d(ws, r, 2, f'=People!B{r}')
+        _d(ws, r, 3, f'=People!C{r}')
+        _d(
+            ws, r, 4,
+            (
+                f'="O:"&IF(\'Big Five\'!B{r+1}>=67,"high",IF(\'Big Five\'!B{r+1}>=34,"medium","low"))'
+                f'&", C:"&IF(\'Big Five\'!C{r+1}>=67,"high",IF(\'Big Five\'!C{r+1}>=34,"medium","low"))'
+                f'&", E:"&IF(\'Big Five\'!D{r+1}>=67,"high",IF(\'Big Five\'!D{r+1}>=34,"medium","low"))'
+                f'&", A:"&IF(\'Big Five\'!E{r+1}>=67,"high",IF(\'Big Five\'!E{r+1}>=34,"medium","low"))'
+                f'&", N:"&IF(\'Big Five\'!F{r+1}>=67,"high",IF(\'Big Five\'!F{r+1}>=34,"medium","low"))'
+            )
+        )
+        _d(
+            ws, r, 5,
+            (
+                f'=INDEX(\'Conflict Style\'!$B$1:$F$1,'
+                f'MATCH(MAX(\'Conflict Style\'!B{r}:F{r}),\'Conflict Style\'!B{r}:F{r},0))'
+            )
+        )
+        _d(
+            ws, r, 6,
+            (
+                f'="Directness "&\'Comm-Decision\'!B{r+1}&"/100; Listening "&\'Comm-Decision\'!E{r+1}'
+                f'&"/100; Feedback tol "&\'Comm-Decision\'!F{r+1}&"/100"'
+            )
+        )
+        _d(
+            ws, r, 7,
+            (
+                f'="Analytical "&\'Comm-Decision\'!G{r+1}&"/100; Risk "&\'Comm-Decision\'!H{r+1}'
+                f'&"/100; Speed "&\'Comm-Decision\'!I{r+1}&"/100"'
+            )
+        )
+        _d(
+            ws, r, 8,
+            (
+                f'="Composite "&EQ!F{r}&"/100 ("'
+                f'&IF(EQ!F{r}>=67,"high",IF(EQ!F{r}>=34,"medium","low"))&")"'
+            )
+        )
+        _d(
+            ws, r, 9,
+            (
+                f'=IF(Attachment!G{r+1}<>"TRUE","check attachment quality",'
+                f'INDEX(Attachment!$B$1:$E$1,MATCH(MAX(Attachment!B{r+1}:E{r+1}),Attachment!B{r+1}:E{r+1},0)))'
+            )
+        )
+        _d(ws, r, 10, f'=IF(OR(\'Big Five\'!H{r+1},\'Comm-Decision\'!L{r+1},EQ!G{r}),"moderate","high")')
+        _d(ws, r, 11, f'=OR(\'Big Five\'!H{r+1},\'Psych Safety\'!J{r+1},\'Comm-Decision\'!L{r+1},EQ!G{r})')
+
+    _yellow_if(ws, "K2:K6", "K2=TRUE")
+
+
+def build_prompt_inputs(ws):
+    ws.column_dimensions["A"].width = 28
+    ws.column_dimensions["B"].width = 140
+    _h(ws, 1, 1, "Section")
+    _h(ws, 1, 2, "Prompt Text")
+
+    sections = [
+        ("SYSTEM ROLE", (
+            "You are a group dynamics simulator anchored to structured psychological profile data. "
+            "Separate evidence, inference, and simulation outputs. Use probabilistic language and include limits."
+        )),
+        ("PERSON PROFILES", (
+            "Use Structured Profile Output rows for each person_id with role, OCEAN summary, conflict mode, "
+            "communication/decision pattern, EQ summary, attachment tendency, confidence, and missing-data flags."
+        )),
+        ("RELATIONSHIP DATA", (
+            "Use Relationship Matrix directed edges with trust/influence/closeness/respect/conflict/dependency/"
+            "communication_frequency/avoidance/alliance/power_differential plus health score."
+        )),
+        ("GROUP CONTEXT", "Use Group Context fields exactly as listed."),
+        ("SCENARIO", "Use Scenario Builder fields exactly as listed."),
+        ("SIMULATION CONFIG", "Use Simulation Config values exactly as listed."),
+        ("OUTPUT REQUIREMENTS", (
+            "Return confidence statement, limitation statement, non-determinism disclaimer, and "
+            "evidence-vs-inference-vs-simulation separation check."
+        )),
+    ]
+
+    for idx, (name, text) in enumerate(sections, start=2):
+        _d(ws, idx, 1, name)
+        _d(ws, idx, 2, text)
+
+    _h(ws, 10, 1, "Copy/Paste Prompt")
+    _f(
+        ws, 10, 2,
+        (
+            '=TEXTJOIN(CHAR(10)&CHAR(10),TRUE,'
+            '"SYSTEM ROLE:"&B2,'
+            '"PERSON PROFILES:"&B3,'
+            '"RELATIONSHIP DATA:"&B4,'
+            '"GROUP CONTEXT:"&B5,'
+            '"SCENARIO:"&B6,'
+            '"SIMULATION CONFIG:"&B7,'
+            '"OUTPUT REQUIREMENTS:"&B8,'
+            '"PROMPT_VERSION_KEY: "&\'Simulation Config\'!B3,'
+            '"RUN_ID: "&\'Simulation Config\'!B2)'
+        )
+    )
+    ws.row_dimensions[10].height = 120
+    ws["B10"].alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
+
+
+def build_simulation_output_log(ws):
+    headers = [
+        ("RunID", 18),
+        ("Date", 12),
+        ("ScenarioTitle", 24),
+        ("PromptVersionKey", 14),
+        ("PassNumber", 10),
+        ("RawOutput", 34),
+        ("OutcomeClassification", 18),
+        ("ProbabilityEstimate", 14),
+        ("ConfidenceEstimate", 14),
+        ("KeyFindings", 26),
+        ("Recommendations", 26),
+        ("LimitationNotes", 24),
+        ("ReviewedBy", 16),
+        ("EvidenceAnchoringScore", 14),
+        ("InternalConsistencyScore", 14),
+        ("PlausibilityScore", 14),
+        ("InterventionUsefulnessScore", 16),
+        ("UncertaintyQualityScore", 15),
+        ("RubricAverageScore", 14),
+        ("RubricNotes", 24),
+    ]
+    for col, (text, width) in enumerate(headers, 1):
+        _h(ws, 1, col, text, width)
+
+    for r in range(2, 22):
+        _f(ws, r, 1, '=IF($E{0}="","",\'Simulation Config\'!$B$2)'.format(r))
+        _f(ws, r, 2, '=IF($E{0}="","",TODAY())'.format(r))
+        _f(ws, r, 3, '=IF($E{0}="","",\'Scenario Builder\'!$B$3)'.format(r))
+        _f(ws, r, 4, '=IF($E{0}="","",\'Simulation Config\'!$B$3)'.format(r))
+        _d(ws, r, 5, "")
+        for c in range(6, 14):
+            _d(ws, r, c, "")
+        for c in range(14, 19):
+            _d(ws, r, c, "")
+        _f(ws, r, 19, f'=IF(COUNTA(N{r}:R{r})=5,ROUND(AVERAGE(N{r}:R{r}),2),"")')
+        _d(ws, r, 20, "")
+
+    _add_dv_int(ws, "E2:E21", 1, 10)
+    _add_dv_int(ws, "N2:R21", 1, 5)
+    _red_if(ws, "N2:R21", "OR(N2<1,N2>5)")
+
+
+def build_visuals(ws):
+    ws.column_dimensions["A"].width = 28
+    ws.column_dimensions["B"].width = 88
+    _h(ws, 1, 1, "Visual")
+    _h(ws, 1, 2, "Status / Notes")
+    rows = [
+        ("Relationship trust heat map", "Use Relationship Matrix Trust column with conditional color scale."),
+        ("Influence sorted bar chart", "Create from Relationship Matrix Influence by from/to aggregation."),
+        ("OCEAN radar (per person)", "Use Big Five rows as chart series."),
+        ("Conflict style stacked bar", "Use Conflict Style mode columns."),
+        ("Outcome distribution chart", "Use Simulation Output Log OutcomeClassification counts."),
+    ]
+    for idx, (title, note) in enumerate(rows, start=2):
+        _d(ws, idx, 1, title)
+        _d(ws, idx, 2, note)
+
+
 # ── Workbook assembly ─────────────────────────────────────────────────────────
 
 TAB_ORDER = [
@@ -744,6 +931,10 @@ TAB_ORDER = [
     ("Group Context",         build_group_context),
     ("Scenario Builder",      build_scenario_builder),
     ("Simulation Config",     build_simulation_config),
+    ("Structured Profile Output", build_structured_profile_output),
+    ("Prompt Inputs",         build_prompt_inputs),
+    ("Simulation Output Log", build_simulation_output_log),
+    ("Visuals",               build_visuals),
     ("Gate-A-Validation-Log", build_validation_log),
 ]
 
@@ -760,6 +951,10 @@ TAB_COLORS = {
     "Group Context":         "1D6F42",
     "Scenario Builder":      "7F6000",
     "Simulation Config":     "5B9BD5",
+    "Structured Profile Output": "2E75B6",
+    "Prompt Inputs":         "548235",
+    "Simulation Output Log": "9E480E",
+    "Visuals":               "8064A2",
     "Gate-A-Validation-Log": "404040",
 }
 
