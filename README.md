@@ -47,3 +47,9 @@ python3 scripts/prompt_trial_runner.py
 Expected output folder:
 
 `artifacts/prompt_trials/`
+
+## GitHub Actions outputs
+
+The `Build Workbook` workflow uploads two downloadable artifacts:
+- `group-dynamics-simulator-phase1` → the generated workbook `.xlsx`
+- `phase1-prompt-trials` → prompt trial markdown files + `determinism_report.json`
