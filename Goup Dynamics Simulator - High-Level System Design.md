@@ -758,3 +758,103 @@ The first output should be a Markdown report containing executive summary, scena
 Key build principle:  
 The spreadsheet should not merely store notes. It should transform assessment and relationship data into structured, model-ready variables that an AI prompt can use consistently.
 
+
+## Phase 2 Implementation Architecture
+
+### Component Diagram (Text Form)
+
+```
+[Web UI]
+   |
+   v
+[API Service]
+   |
+   +--> [Validation Layer]
+   |         |
+   |         +--> validates canonical entities and run payloads
+   |
+   +--> [Persistence Layer]
+   |         |
+   |         +--> stores canonical data and run outputs
+   |
+   +--> [Prompt Assembly Service]
+             |
+             +--> reads canonical data via API contracts
+             +--> produces deterministic, transient prompt artifacts
+```
+
+Core components:
+- Web UI: authoring and editing surface for people, relationships, scenarios, simulation configs, and run review.
+- API service: primary orchestration boundary for CRUD, simulation run lifecycle, and retrieval endpoints.
+- Validation layer: schema, referential, and rules validation for entity updates and run creation.
+- Prompt assembly service: deterministic composition of model-ready prompt bundles from canonical persisted inputs.
+- Persistence layer: durable storage for canonical entities, run metadata, outputs, rubric scores, and evidence metadata.
+
+### Data Flow
+
+#### 1) Intake/Edit of Person, Relationship, and Scenario Data
+1. User creates or updates entities in Web UI forms.
+2. Web UI submits requests to API service (`POST/PUT/PATCH` on person, relationship, scenario resources).
+3. Validation layer enforces schema correctness, required fields, cross-entity constraints, and ID integrity.
+4. API service writes accepted canonical records to persistence layer.
+5. API returns normalized canonical records (with version/update metadata) to Web UI.
+
+#### 2) Simulation Run Creation
+1. User starts a run from a selected scenario and participant set in Web UI.
+2. Web UI calls API service run endpoint (for example `POST /simulations/runs`).
+3. API service issues `sim.run_id` and persists initial run envelope/status.
+4. API invokes prompt assembly service with canonical record IDs and config flags.
+5. Prompt assembly service loads canonical inputs through API contracts, applies deterministic ordering/templating rules, and emits transient prompt artifacts.
+6. API dispatches simulation/evaluation execution and updates run status/progress.
+
+#### 3) Output and Rubric Persistence
+1. Simulation/evaluator responses return to API service.
+2. API service stores raw output payloads, parsed structured outputs, rubric evaluations, and confidence metadata in persistence layer.
+3. API service stores evidence source metadata linking rubric claims to source spans/artifacts.
+4. API exposes run retrieval endpoints for Web UI to render reports, traces, and audit views.
+
+### Non-Functional Requirements
+
+- Traceability (`sim.run_id`):
+  - Every run, prompt artifact, output fragment, rubric record, and evidence object must be keyed to `sim.run_id`.
+  - Cross-table and API response payloads should include `sim.run_id` for end-to-end lineage.
+
+- Deterministic prompt assembly controls:
+  - Stable entity ordering rules (for example deterministic sort keys).
+  - Template version pinning and explicit prompt schema versions.
+  - Configurable but explicit toggles for optional sections, with defaults captured in run metadata.
+  - Hashing/signature of final assembled prompt artifact for reproducibility checks.
+
+- Auditability for evidence source metadata:
+  - Persist provenance for each scored/evaluated claim (source type, source ID, span/anchor, timestamp, version).
+  - Maintain immutable append-only audit events for run creation, prompt build, execution, and post-processing.
+  - Expose machine-readable audit endpoints for reviewer and compliance workflows.
+
+### Canonical vs Prompt-Layer Boundary
+
+Persisted canonical data (durable, system-of-record):
+- Person entities and assessment-derived attributes.
+- Relationship entities/edges and directional ratings.
+- Scenario definitions and simulation configuration defaults.
+- Run envelopes/status, outputs, rubric results, and evidence metadata.
+
+Derived/transient prompt-layer artifacts (ephemeral or regenerable):
+- Prompt-ready text blocks assembled from canonical records.
+- Temporary token-budget reductions/summaries.
+- Intermediate renderings, section concatenations, and model invocation payload wrappers.
+
+Boundary rule:
+- Canonical persisted data must remain source-of-truth and independently interpretable without prompt artifacts.
+- Prompt-layer artifacts are derived views that may be cached but are always reproducible from canonical persisted inputs plus explicit assembly version/config.
+
+### Migration Note: Phase 1 Spreadsheet to Phase 2 Storage/API Model
+
+- Phase 1 spreadsheet tabs map to Phase 2 resource models (people, assessments, relationships, scenarios, configs, runs, outputs).
+- Introduce an ingestion/migration pipeline that:
+  1. Extracts tabular data from workbook tabs.
+  2. Normalizes values into Phase 2 schemas.
+  3. Resolves foreign-key links (person IDs, relationship endpoints, scenario references).
+  4. Writes canonical records through API validation endpoints (not direct DB writes) to enforce consistent rules.
+- Preserve legacy workbook row identifiers as external reference fields for trace-back during transition.
+- Mark migrated records with migration batch/version metadata to support reconciliation and rollback.
+- Decommission direct spreadsheet-driven prompt generation after API-backed prompt assembly reaches parity.
