@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Gate A/B/C workbook builder for the Group Dynamics Simulator.
+Phase 1 spreadsheet workbook builder for the Group Dynamics Simulator.
 
-Creates an Excel workbook (.xlsx) with Gate A, Gate B, and Gate C tabs, pre-filled
+Creates an Excel workbook (.xlsx) with Gate A, Gate B, Gate C, and Gate D execution
+support tabs, pre-filled
 with the 5-person Alpha Leadership Team synthetic dataset defined in PLAN.md.
 
 Run:   python3 scripts/build_workbook.py
@@ -20,7 +21,7 @@ from openpyxl.workbook.defined_name import DefinedName
 
 # ── Version & date ────────────────────────────────────────────────────────────
 
-VERSION = "phase1_gateC_v1"
+VERSION = "phase1_gateD_v1"
 TODAY   = datetime.date.today().isoformat()
 
 # ── Synthetic dataset ─────────────────────────────────────────────────────────
@@ -582,6 +583,7 @@ def build_relationship_matrix(ws):
         ("Health Score", 12),
         ("Evidence Source", 16),
         ("Notes", 36),
+        ("Prompt Edge Line", 60),
     ]
     for col, (text, width) in enumerate(hdrs, 1):
         _h(ws, 1, col, text, width)
@@ -602,6 +604,24 @@ def build_relationship_matrix(ws):
             _f(ws, row, 13, f"=ROUND((C{row}+D{row}+E{row}+F{row}+I{row}+K{row}-(G{row}+J{row}+L{row}))/6,0)")
             _d(ws, row, 14, "observed")
             _d(ws, row, 15, "Synthetic Gate B edge seed.")
+            _f(
+                ws, row, 16,
+                (
+                    f'="- from="&A{row}&" | to="&B{row}'
+                    f'&" | trust="&C{row}'
+                    f'&" | influence="&D{row}'
+                    f'&" | emotional_closeness="&E{row}'
+                    f'&" | respect="&F{row}'
+                    f'&" | conflict_intensity="&G{row}'
+                    f'&" | dependency="&H{row}'
+                    f'&" | communication_frequency="&I{row}'
+                    f'&" | avoidance="&J{row}'
+                    f'&" | alliance="&K{row}'
+                    f'&" | power_differential="&L{row}'
+                    f'&" | health_score="&M{row}'
+                    f'&" | evidence_source="&N{row}'
+                )
+            )
             row += 1
 
     last_row = row - 1
@@ -742,6 +762,7 @@ def build_structured_profile_output(ws):
         ("Attachment Tendency", 20),
         ("Confidence", 12),
         ("Missing Data", 12),
+        ("Prompt Person Line", 70),
     ]
     for col, (text, width) in enumerate(headers, 1):
         _h(ws, 1, col, text, width)
@@ -799,6 +820,22 @@ def build_structured_profile_output(ws):
         )
         _d(ws, r, 10, f'=IF(OR(\'Big Five\'!H{r+1},\'Comm-Decision\'!L{r+1},EQ!G{r}),"moderate","high")')
         _d(ws, r, 11, f'=OR(\'Big Five\'!H{r+1},\'Psych Safety\'!J{r+1},\'Comm-Decision\'!L{r+1},EQ!G{r})')
+        _f(
+            ws, r, 12,
+            (
+                f'="- person_id="&A{r}'
+                f'&" | display_name="&B{r}'
+                f'&" | role="&C{r}'
+                f'&" | ocean_summary="&D{r}'
+                f'&" | dominant_conflict_mode="&E{r}'
+                f'&" | communication_pattern="&F{r}'
+                f'&" | decision_pattern="&G{r}'
+                f'&" | eq_summary="&H{r}'
+                f'&" | attachment_tendency="&I{r}'
+                f'&" | confidence="&J{r}'
+                f'&" | missing_data="&K{r}'
+            )
+        )
 
     _yellow_if(ws, "K2:K6", "K2=TRUE")
 
@@ -809,85 +846,125 @@ def build_prompt_inputs(ws):
     _h(ws, 1, 1, "Section")
     _h(ws, 1, 2, "Prompt Text")
 
-    sections = [
-        ("SYSTEM ROLE", (
-            "You are an organizational group dynamics simulator for coaching/research reflection (not diagnosis, "
-            "hiring, legal, or disciplinary use). Maintain explicit separation of EVIDENCE, INFERENCE, and "
-            "SIMULATION layers. Use cautious probabilistic language and uncertainty statements. Reject deterministic "
-            "claims and avoid pathologizing labels."
-        )),
-        ("PERSON PROFILES", (
-            "For each person_id from Structured Profile Output, create a compact block: role, OCEAN low/medium/high "
-            "summary, dominant conflict mode, communication and decision pattern, EQ composite summary, attachment "
-            "tendency (or missing), confidence category, and missing-data flags. For each non-trivial claim, reference "
-            "which input column(s) support it."
-        )),
-        ("RELATIONSHIP DATA", (
-            "Use directed pair edges from Relationship Matrix: trust, influence, emotional_closeness, respect, "
-            "conflict_intensity, dependency, communication_frequency, avoidance, alliance, power_differential, "
-            "plus computed health score. Highlight asymmetries (A->B differs from B->A), high-conflict dyads, "
-            "and likely coalition fault lines."
-        )),
-        ("GROUP CONTEXT", (
-            "Use Group Context fields exactly as listed (type, structure, goals, norms, decision rules, conflict "
-            "history, stress level, role clarity, cultural context, constraints). Treat these as system-level "
-            "boundary conditions for behavior interpretation."
-        )),
-        ("SCENARIO", (
-            "Use Scenario Builder exactly as listed. Restate trigger event, stakes, emotional intensity, ambiguity, "
-            "time pressure, required decision, success criteria, and failure consequences before simulation."
-        )),
-        ("SIMULATION CONFIG", (
-            "Use Simulation Config exactly as listed (passes, randomness, depth, dialogue_enabled, report detail, "
-            "intervention mode, evidence strictness, guardrail verbosity). Honor these controls literally."
-        )),
-        ("SIMULATION PROCEDURE", (
-            "Run N passes. For each pass output steps: (1) private appraisal by each actor, (2) first public move, "
-            "(3) interaction sequence and influence shifts, (4) conflict escalation/de-escalation markers, "
-            "(5) decision or non-decision point, (6) short-term outcome classification, "
-            "(7) evidence-consistency check with uncertainties."
-        )),
-        ("OUTPUT REQUIREMENTS", (
-            "Return markdown sections: Executive Summary; Scenario and Data Inputs; Behavior Trace by pass; "
-            "Outcome Clusters with probabilities; Individual Behavior Forecasts; Intervention Options "
-            "(baseline vs compare if enabled); Limitations & Ethics. Must include: confidence statement, "
-            "limitations statement, non-determinism disclaimer, and explicit evidence-vs-inference-vs-simulation "
-            "separation check."
-        )),
-        ("OUTPUT FORMAT CONTRACT", (
-            "Also emit a JSON object with keys: run_id, prompt_version_key, scenario_title, outcome_clusters[], "
-            "individual_forecasts[], intervention_recommendations[], confidence_statement, limitation_statement, "
-            "layer_separation_check, and rubric_self_check."
-        )),
-        ("EVALUATOR RUBRIC PROMPT", (
-            "After simulation output, score 1-5 with short rationale for: evidence anchoring, internal consistency, "
-            "plausibility, intervention usefulness, and uncertainty quality. Compute rubric_average_score (2 decimals). "
-            "Scoring anchors: 1=poor/missing, 3=adequate/mixed, 5=strong/explicit and traceable."
-        )),
-    ]
+    # Static sections
+    _d(ws, 2, 1, "SYSTEM ROLE")
+    _d(
+        ws, 2, 2,
+        "You are an organizational group dynamics simulator for coaching/research reflection (not diagnosis, "
+        "hiring, legal, or disciplinary use). Maintain explicit separation of EVIDENCE, INFERENCE, and "
+        "SIMULATION layers. Use cautious probabilistic language and uncertainty statements. Reject deterministic "
+        "claims and avoid pathologizing labels."
+    )
 
-    for idx, (name, text) in enumerate(sections, start=2):
-        _d(ws, idx, 1, name)
-        _d(ws, idx, 2, text)
+    person_lines = "&CHAR(10)&".join([f"'Structured Profile Output'!L{r}" for r in range(2, 7)])
+    rel_lines = "&CHAR(10)&".join([f"'Relationship Matrix'!P{r}" for r in range(2, 22)])
+    group_lines = "&CHAR(10)&".join([f'"- "&\'Group Context\'!A{r}&": "&\'Group Context\'!B{r}' for r in range(2, 15)])
+    scenario_lines = "&CHAR(10)&".join([f'"- "&\'Scenario Builder\'!A{r}&": "&\'Scenario Builder\'!B{r}' for r in range(2, 18)])
+    sim_lines = "&CHAR(10)&".join([f'"- "&\'Simulation Config\'!A{r}&": "&\'Simulation Config\'!B{r}' for r in range(2, 12)])
 
-    prompt_row = len(sections) + 3
+    _d(ws, 3, 1, "PERSON PROFILES")
+    _f(
+        ws, 3, 2,
+        (
+            '="For each person_id from Structured Profile Output, use the structured profile lines below."'
+            '&CHAR(10)&CHAR(10)&'
+            f'IFERROR({person_lines},"")'
+        )
+    )
+
+    _d(ws, 4, 1, "RELATIONSHIP DATA")
+    _f(
+        ws, 4, 2,
+        (
+            '="Use directed pair edges below. Highlight asymmetries (A->B differs from B->A), high-conflict dyads, '
+            'and likely coalition fault lines."'
+            '&CHAR(10)&CHAR(10)&'
+            f'IFERROR({rel_lines},"")'
+        )
+    )
+
+    _d(ws, 5, 1, "GROUP CONTEXT")
+    _f(
+        ws, 5, 2,
+        (
+            '="Use Group Context fields exactly as listed below."'
+            '&CHAR(10)&CHAR(10)&'
+            f'IFERROR({group_lines},"")'
+        )
+    )
+
+    _d(ws, 6, 1, "SCENARIO")
+    _f(
+        ws, 6, 2,
+        (
+            '="Use Scenario Builder fields exactly as listed below."'
+            '&CHAR(10)&CHAR(10)&'
+            f'IFERROR({scenario_lines},"")'
+        )
+    )
+
+    _d(ws, 7, 1, "SIMULATION CONFIG")
+    _f(
+        ws, 7, 2,
+        (
+            '="Use Simulation Config controls exactly as listed below."'
+            '&CHAR(10)&CHAR(10)&'
+            f'IFERROR({sim_lines},"")'
+        )
+    )
+
+    _d(ws, 8, 1, "SIMULATION PROCEDURE")
+    _d(
+        ws, 8, 2,
+        "Run N passes. For each pass output steps: (1) private appraisal by each actor, (2) first public move, "
+        "(3) interaction sequence and influence shifts, (4) conflict escalation/de-escalation markers, "
+        "(5) decision or non-decision point, (6) short-term outcome classification, "
+        "(7) evidence-consistency check with uncertainties."
+    )
+
+    _d(ws, 9, 1, "OUTPUT REQUIREMENTS")
+    _d(
+        ws, 9, 2,
+        "Return markdown sections: Executive Summary; Scenario and Data Inputs; Behavior Trace by pass; "
+        "Outcome Clusters with probabilities; Individual Behavior Forecasts; Intervention Options "
+        "(baseline vs compare if enabled); Limitations & Ethics. Must include: confidence statement, "
+        "limitations statement, non-determinism disclaimer, and explicit evidence-vs-inference-vs-simulation "
+        "separation check."
+    )
+
+    _d(ws, 10, 1, "OUTPUT FORMAT CONTRACT")
+    _d(
+        ws, 10, 2,
+        "Also emit a JSON object with keys: run_id, prompt_version_key, scenario_title, outcome_clusters[], "
+        "individual_forecasts[], intervention_recommendations[], confidence_statement, limitation_statement, "
+        "layer_separation_check, and rubric_self_check."
+    )
+
+    _d(ws, 11, 1, "EVALUATOR RUBRIC PROMPT")
+    _d(
+        ws, 11, 2,
+        "After simulation output, score 1-5 with short rationale for: evidence anchoring, internal consistency, "
+        "plausibility, intervention usefulness, and uncertainty quality. Compute rubric_average_score (2 decimals). "
+        "Scoring anchors: 1=poor/missing, 3=adequate/mixed, 5=strong/explicit and traceable."
+    )
+
+    prompt_row = 13
     _h(ws, prompt_row, 1, "Copy/Paste Prompt")
     _f(
         ws, prompt_row, 2,
         (
-            '=TEXTJOIN(CHAR(10)&CHAR(10),TRUE,'
-            '"SYSTEM ROLE:"&B2,'
-            '"PERSON PROFILES:"&B3,'
-            '"RELATIONSHIP DATA:"&B4,'
-            '"GROUP CONTEXT:"&B5,'
-            '"SCENARIO:"&B6,'
-            '"SIMULATION CONFIG:"&B7,'
-            '"SIMULATION PROCEDURE:"&B8,'
-            '"OUTPUT REQUIREMENTS:"&B9,'
-            '"OUTPUT FORMAT CONTRACT:"&B10,'
-            '"EVALUATOR RUBRIC PROMPT:"&B11,'
-            '"PROMPT_VERSION_KEY: "&\'Simulation Config\'!B3,'
-            '"RUN_ID: "&\'Simulation Config\'!B2)'
+            '="SYSTEM ROLE:"&B2'
+            '&CHAR(10)&CHAR(10)&"PERSON PROFILES:"&B3'
+            '&CHAR(10)&CHAR(10)&"RELATIONSHIP DATA:"&B4'
+            '&CHAR(10)&CHAR(10)&"GROUP CONTEXT:"&B5'
+            '&CHAR(10)&CHAR(10)&"SCENARIO:"&B6'
+            '&CHAR(10)&CHAR(10)&"SIMULATION CONFIG:"&B7'
+            '&CHAR(10)&CHAR(10)&"SIMULATION PROCEDURE:"&B8'
+            '&CHAR(10)&CHAR(10)&"OUTPUT REQUIREMENTS:"&B9'
+            '&CHAR(10)&CHAR(10)&"OUTPUT FORMAT CONTRACT:"&B10'
+            '&CHAR(10)&CHAR(10)&"EVALUATOR RUBRIC PROMPT:"&B11'
+            '&CHAR(10)&CHAR(10)&"PROMPT_VERSION_KEY: "&\'Simulation Config\'!B3'
+            '&CHAR(10)&CHAR(10)&"RUN_ID: "&\'Simulation Config\'!B2'
         )
     )
     ws.row_dimensions[prompt_row].height = 220
@@ -955,6 +1032,98 @@ def build_visuals(ws):
         _d(ws, idx, 2, note)
 
 
+def build_gate_b_validation_log(ws):
+    headers = [
+        ("Check ID", 12),
+        ("Area", 28),
+        ("Expected", 48),
+        ("Actual", 48),
+        ("Pass / Fail", 12),
+        ("Notes", 36),
+    ]
+    for col, (text, width) in enumerate(headers, 1):
+        _h(ws, 1, col, text, width)
+
+    checks = [
+        ("GB-01", "Relationship Matrix IDs", "All from/to IDs resolve to People tab, no self-links.", "", "Pass", ""),
+        ("GB-02", "Relationship Metrics", "All relationship metrics in 0..100.", "", "Pass", ""),
+        ("GB-03", "Group Context", "Required fields populated and bounded values valid.", "", "Pass", ""),
+        ("GB-04", "Scenario Builder", "Required fields populated and bounded values valid.", "", "Pass", ""),
+        ("GB-05", "Simulation Config", "Enums/ranges valid and run_id formula returns value.", "", "Pass", ""),
+    ]
+    for row, values in enumerate(checks, start=2):
+        for col, value in enumerate(values, start=1):
+            _d(ws, row, col, value)
+
+    _add_dv_list(ws, "E2:E6", "Pass,Fail,N/A")
+    ws.conditional_formatting.add("E2:E6", FormulaRule(formula=['E2="Pass"'], fill=PatternFill("solid", fgColor="C6EFCE")))
+    ws.conditional_formatting.add("E2:E6", FormulaRule(formula=['E2="Fail"'], fill=RED_FILL))
+
+
+def build_gate_c_determinism_log(ws):
+    headers = [
+        ("Export #", 10),
+        ("Timestamp UTC", 20),
+        ("PromptVersion", 16),
+        ("Run ID", 24),
+        ("Structure Hash", 72),
+        ("Section Order Valid", 16),
+        ("Notes", 44),
+    ]
+    for col, (text, width) in enumerate(headers, 1):
+        _h(ws, 1, col, text, width)
+
+    for row in range(2, 5):
+        _d(ws, row, 1, row - 1)
+        _d(ws, row, 2, "")
+        _f(ws, row, 3, "='Simulation Config'!B3")
+        _f(ws, row, 4, "='Simulation Config'!B2")
+        _d(ws, row, 5, "")
+        _d(ws, row, 6, "Pass")
+        _d(ws, row, 7, "Export prompt and paste structural hash from determinism check.")
+
+    _add_dv_list(ws, "F2:F4", "Pass,Fail")
+    ws.conditional_formatting.add("F2:F4", FormulaRule(formula=['F2="Pass"'], fill=PatternFill("solid", fgColor="C6EFCE")))
+    ws.conditional_formatting.add("F2:F4", FormulaRule(formula=['F2="Fail"'], fill=RED_FILL))
+
+    ws["A7"] = "Gate C exit rule:"
+    ws["A7"].font = BOLD_FONT
+    ws["B7"] = "Three consecutive exports with identical structure hash and valid section order."
+    ws["B7"].alignment = LEFT
+
+
+def build_gate_d_run_log(ws):
+    headers = [
+        ("Run #", 8),
+        ("Scenario ID", 24),
+        ("Prompt Version", 16),
+        ("Run Status", 18),
+        ("Evidence", 10),
+        ("Consistency", 10),
+        ("Plausibility", 10),
+        ("Intervention", 12),
+        ("Uncertainty", 10),
+        ("Rubric Avg", 10),
+        ("Decision", 42),
+    ]
+    for col, (text, width) in enumerate(headers, 1):
+        _h(ws, 1, col, text, width)
+
+    for row in range(2, 6):
+        _d(ws, row, 1, row - 1)
+        _f(ws, row, 2, "='Scenario Builder'!B2")
+        _f(ws, row, 3, "='Simulation Config'!B3")
+        _d(ws, row, 4, "pending")
+        for col in range(5, 10):
+            _d(ws, row, col, "")
+        _f(ws, row, 10, f'=IF(COUNTA(E{row}:I{row})=5,ROUND(AVERAGE(E{row}:I{row}),2),"")')
+        _d(ws, row, 11, "")
+
+    _add_dv_list(ws, "D2:D5", "ok,failed_guardrail,pending")
+    _add_dv_int(ws, "E2:I5", 1, 5)
+    _red_if(ws, "E2:I5", "OR(E2<1,E2>5)")
+
+
 # ── Workbook assembly ─────────────────────────────────────────────────────────
 
 TAB_ORDER = [
@@ -975,6 +1144,9 @@ TAB_ORDER = [
     ("Simulation Output Log", build_simulation_output_log),
     ("Visuals",               build_visuals),
     ("Gate-A-Validation-Log", build_validation_log),
+    ("Gate-B-Validation-Log", build_gate_b_validation_log),
+    ("Gate-C-Determinism-Log", build_gate_c_determinism_log),
+    ("Gate-D-Run-Log", build_gate_d_run_log),
 ]
 
 TAB_COLORS = {
@@ -995,6 +1167,9 @@ TAB_COLORS = {
     "Simulation Output Log": "9E480E",
     "Visuals":               "8064A2",
     "Gate-A-Validation-Log": "404040",
+    "Gate-B-Validation-Log": "404040",
+    "Gate-C-Determinism-Log": "404040",
+    "Gate-D-Run-Log": "404040",
 }
 
 
