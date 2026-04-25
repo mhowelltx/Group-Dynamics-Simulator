@@ -22,19 +22,18 @@ A personal-use, AI-assisted group dynamics simulator that models how groups beha
 
 ## Implementation Phases
 
-### Phase 1 — Spreadsheet Prototype (CURRENT)
-A Google Sheets / Excel workbook that transforms assessment data into structured, model-ready variables and generates AI prompts. Goal: validate the psychological model and prompt design before building software.
+### Phase 1 — Spreadsheet Prototype (COMPLETED)
+Phase 1 established and validated the spreadsheet-first contract artifacts (field dictionary, prompt contract, and run ledger workflow). Treat this as historical baseline context and do not expand Phase 1 scope unless explicitly doing maintenance/backfill.
 
 **Branch**: `claude/plan-group-simulator-5kmcc`
-**Status**: Planning complete. Spreadsheet not yet built.
+**Status**: ✅ Complete (historical reference only)
 
-### Phase 2 — Web Application
-Web UI + database backend replacing the spreadsheet. Built after the prompt model is validated.
+### Phase 2 — Web Application (CURRENT)
+Build the canonical web application and data layer that operationalize the Phase 1 contract in production-grade services.
 
-**Branch**: TBD (create from main when ready)
-**Stack**: TBD — design doc is stack-agnostic; recommend Python/FastAPI + PostgreSQL + React
-
----
+**Branch**: TBD (create from main when implementation starts)
+**Status**: 🚧 In progress (authoritative status tracked in `PLAN.md`)
+**Stack direction**: TBD lock decision pending; design remains stack-agnostic until lock decision is made
 
 ## Active Branch Convention
 
@@ -71,16 +70,20 @@ Never collapse these layers. Confidence ratings propagate through all outputs.
 
 ---
 
-## Data Model Objects (Phase 1 Scope)
+## Canonical Data Model Entities (Phase 2 Scope)
 
-- **Person Profile** — OCEAN scores, conflict style, EQ, communication style, decision style, stress response, motivations, values, evidence sources
-- **Relationship Profile** — Directed matrix: trust, influence, emotional closeness, conflict intensity, power differential, alliance indicators
-- **Group Profile** — Type, structure, norms, psychological safety, decision rules, stress level, cultural context
-- **Scenario Profile** — Triggering event, stakes, emotional intensity, time pressure, success/failure criteria
-- **Simulation Config** — Passes, randomness, depth, dialogue on/off, strictness settings
-- **Simulation Output** — Timeline, behavior traces, outcome clusters, probability weights, recommendations
+Use these entities as the canonical model for implementation work and validation against planning artifacts:
 
----
+- **Person** — stable identity + role/authority metadata for each participant
+- **AssessmentSnapshot** — timestamped assessment/observation values (OCEAN, conflict, EQ, communication, decision, attachment, psych safety items)
+- **RelationshipEdge** — directed dyadic metrics (`from_person_id` → `to_person_id`) with per-edge evidence metadata
+- **GroupContext** — group-level structure, norms, stress, decision context, and environment constraints
+- **Scenario** — simulated situation definition including triggers, stakes, constraints, and success/failure criteria
+- **SimulationConfig** — run-time controls (passes, randomness, depth, strictness, verbosity) and `prompt_version_key`
+- **SimulationRun** — lineage object tying inputs/config/timestamps/output artifacts for each run
+- **Evaluation fields** — rubric and quality fields (evidence anchoring, consistency, plausibility, intervention usefulness, uncertainty quality, aggregate scores/notes)
+
+**Contract note**: Derived prompt artifacts (assembled prompt text blocks, convenience summaries, formatting composites) are non-canonical by default. Persist source-of-truth inputs and lineage metadata, then regenerate derived artifacts deterministically when needed.
 
 ## Spreadsheet Tab Plan (Phase 1)
 
@@ -173,12 +176,13 @@ Report sections:
 When starting a new session on this project:
 
 1. `git log --oneline -10` — orient to recent commits
-2. Read `PLAN.md` — check current phase status and next tasks
-3. Check which phase is active and what's been completed
-4. Read the relevant section of the design doc if working on a new component
-5. Continue from the first incomplete task in PLAN.md
-
----
+2. Read `PLAN.md` first — confirm current phase, active tasks, and sequencing (source of truth for status)
+3. Confirm Phase 2 scope boundaries (do not re-open Phase 1 prototype tasks unless explicitly requested)
+4. Read the relevant design-doc section before implementing a new subsystem (architecture intent first, then code)
+5. Validate schema consistency against canonical entities (`Person`, `AssessmentSnapshot`, `RelationshipEdge`, `GroupContext`, `Scenario`, `SimulationConfig`, `SimulationRun`)
+6. Verify `prompt_version_key` usage is explicit in any config/run path touched
+7. Verify run lineage requirements are preserved (`run_id`, timestamps, config linkage, scenario/group linkage)
+8. Continue from the first incomplete Phase 2 task in `PLAN.md`
 
 ## Important Constraints
 
@@ -186,29 +190,38 @@ When starting a new session on this project:
 - Not a clinical tool, not a hiring tool, not a legal tool
 - All outputs must carry confidence ratings and evidence tracebacks
 - All outputs must include limitation and ethics warnings
-- Family-system modeling is Phase 2+ — Phase 1 focuses on organizational teams
-- No automated assessment administration in Phase 1
+- Preserve explicit non-determinism in simulation language and outputs (never present outcomes as certainties)
+- Family-system modeling is Phase 2+ — include only when the active Phase 2 task explicitly calls for it
+- Derived prompt artifacts are **non-canonical**: persist source data + lineage, not redundant derived prompt blobs in core storage
+
+### Cross-Document Source of Truth
+
+- `PLAN.md` = implementation sequencing and status tracking
+- `Goup Dynamics Simulator - High-Level System Design.md` = architecture intent and design rationale
+- `CLAUDE.md` = session execution context and continuity protocol
 
 ## Session Handoff
 
 Use this section at the **end of every work session** to leave clear continuity for the next session.
 
-- **Current milestone**: Phase 1.10 prompt engineering templates drafted in `Prompt Inputs`; pending simulation trial runs and rubric-based iteration.
-- **Last completed task ID**: 1.10.a-g (system role + block templates + output contract + evaluator rubric prompt scaffolding implemented in `scripts/build_workbook.py`)
+- **Current milestone**: Phase 2 core platform buildout (schema + API + validation + prompt assembly service).
+- **Last completed task ID**: Phase 1 closeout and Phase 2 kickoff alignment update (`PLAN.md` now marks Phase 2 current).
 - **Next 3 concrete tasks**:
-  1. Test prompt with synthetic 3-person scenario and score output with rubric in Simulation Output Log.
-  2. Test prompt with realistic 5–8 person scenario and compare rubric average vs baseline prompt version.
-  3. Record run outcomes in `PLAN.md` Run Ledger and promote/adjust prompt version key if improvement criteria are met.
+  1. Implement canonical DB schema for `Person`, `AssessmentSnapshot`, `RelationshipEdge`, `GroupContext`, `Scenario`, `SimulationConfig`, and `SimulationRun`.
+  2. Implement API CRUD surfaces for core entities with contract-aligned request/response shapes.
+  3. Implement validation and prompt-assembly service with explicit `prompt_version_key` handling and run-lineage capture.
 - **Known blockers**:
-  - Manual workbook validation still required (open the .xlsx, check formulas evaluate correctly, confirm conditional formatting and list validations fire on bad data).
-  - Gate C DoD evidence (determinism log + checklist) not yet recorded in `PLAN.md`.
+  - Stack lock decision pending (backend/web framework + DB migration tooling) before deep implementation can proceed.
+  - Auth boundary for personal-use MVP still needs explicit decision to avoid rework in API middleware.
+  - Migration approach from Phase 1 spreadsheet artifacts to canonical DB records is not finalized.
 - **Open decisions with owner/date**:
 
 | Decision | Owner | Target date | Status |
 |---|---|---|---|
-| Choose spreadsheet platform (Google Sheets vs Excel) | Project owner | 2026-04-26 | **Resolved** — Excel (.xlsx) via build script; import to Google Sheets for sharing if needed |
-| Choose prompt packaging format default (JSON-heavy vs hybrid narrative+JSON) | Project owner | 2026-04-27 | Open |
-| Choose confidence representation default (categorical vs numeric-visible) | Project owner | 2026-04-27 | **Resolved** — categorical (validated/self_report/observed/inferred/missing) locked in contract |
+| Lock Phase 2 implementation stack (API framework, UI framework, DB tooling) | Project owner | 2026-04-30 | Open |
+| Define MVP auth model (none/local-only/basic account) | Project owner | 2026-04-30 | Open |
+| Confirm migration path from spreadsheet artifacts to canonical schema | Project owner | 2026-05-02 | Open |
+| Finalize test strategy (unit/integration/e2e + simulation contract tests) | Project owner | 2026-05-03 | Open |
 
 ### End-of-Session Update Checklist (<= 5 minutes)
 
