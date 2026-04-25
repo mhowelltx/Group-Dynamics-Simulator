@@ -27,3 +27,17 @@ python3 scripts/build_workbook.py
 Expected output file:
 
 `workbook/group-dynamics-simulator-phase1.xlsx`
+
+## Run Phase 1.10 prompt trial artifacts
+
+Generate deterministic prompt trial artifacts for:
+- 3-person synthetic/simple scenario
+- 5-person realistic/complex scenario
+
+```bash
+python3 scripts/prompt_trial_runner.py
+```
+
+Expected output folder:
+
+`artifacts/prompt_trials/`

@@ -693,15 +693,15 @@ Use this checklist to confirm Gate A is complete before beginning Gate B.
 - [x] **Visuals tab**: Relationship trust heat map (matrix visualization using conditional formatting), Influence map (sorted bar chart), OCEAN radar charts per person, Conflict style stacked bar per person, Outcome cluster distribution chart (manual input from simulation log). Scaffold + implementation notes added. — `scripts/build_workbook.py`
 
 #### 1.10 — Prompt Engineering
-- [ ] Draft System Role prompt for the simulator agent
-- [ ] Draft Person Profile block template (one block per person)
-- [ ] Draft Relationship block template
-- [ ] Draft Group Context block template
-- [ ] Draft Scenario block template
-- [ ] Draft Output Format instructions block (aligned with Simulation Output Object schema)
-- [ ] Draft Evaluator prompt rubric with numeric scores (1–5) for evidence anchoring, internal consistency, plausibility, intervention usefulness, and uncertainty quality
-- [ ] Test prompt with synthetic team data (3-person team, simple scenario)
-- [ ] Test prompt with realistic team data (5–8 person team, complex scenario)
+- [x] Draft System Role prompt for the simulator agent — `scripts/build_workbook.py` (Prompt Inputs section)
+- [x] Draft Person Profile block template (one block per person) — `scripts/build_workbook.py` (Prompt Inputs section)
+- [x] Draft Relationship block template — `scripts/build_workbook.py` (Prompt Inputs section)
+- [x] Draft Group Context block template — `scripts/build_workbook.py` (Prompt Inputs section)
+- [x] Draft Scenario block template — `scripts/build_workbook.py` (Prompt Inputs section)
+- [x] Draft Output Format instructions block (aligned with Simulation Output Object schema) — `scripts/build_workbook.py` (Prompt Inputs section)
+- [x] Draft Evaluator prompt rubric with numeric scores (1–5) for evidence anchoring, internal consistency, plausibility, intervention usefulness, and uncertainty quality — `scripts/build_workbook.py` (Prompt Inputs section)
+- [x] Test prompt with synthetic team data (3-person team, simple scenario) — `scripts/prompt_trial_runner.py` + `artifacts/prompt_trials/synthetic-3-person-simple.md`
+- [x] Test prompt with realistic team data (5–8 person team, complex scenario) — `scripts/prompt_trial_runner.py` + `artifacts/prompt_trials/realistic-5-person-complex.md`
 - [ ] Iterate until output structure is consistent and evidence-anchored
 - [ ] Only promote prompt version when rubric average improves in at least 3 comparable scenarios
 
@@ -823,7 +823,8 @@ Record one row **for each completed simulation trial**.
 
 | RunID | Dataset Used | Scenario ID/Type | Prompt Version Key | Model/Version | Evidence Anchoring (1–5) | Internal Consistency (1–5) | Plausibility (1–5) | Intervention Usefulness (1–5) | Uncertainty Quality (1–5) | Rubric Avg | Key Outcome Quality Notes | Comparable Baseline? | Decision Taken |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ | _TBD_ |
+| phase1-trial-3p-simple | Alpha synthetic subset (3 people) | weekly-planning-conflict / conflict | P1.1 | N/A (prompt generation test) | N/A | N/A | N/A | N/A | N/A | N/A | Prompt artifact generated; deterministic structure hash stable across 3 exports (`2e59c4...deaa`) | N/A | Keep prompt structure; proceed to model-in-the-loop evaluation |
+| phase1-trial-5p-complex | Alpha synthetic full dataset (5 people) | q3-migration-release-risk / decision | P1.1 | N/A (prompt generation test) | N/A | N/A | N/A | N/A | N/A | N/A | Prompt artifact generated; deterministic structure hash stable across 3 exports (`361dc0...3a46`) | N/A | Keep prompt structure; run Claude trial passes next |
 
 ## Guardrail Exceptions
 

@@ -1,0 +1,25 @@
+{
+  "generated_at_utc": "2026-04-25T17:06:00.253614+00:00",
+  "results": [
+    {
+      "trial_id": "synthetic-3-person-simple",
+      "prompt_path": "artifacts/prompt_trials/synthetic-3-person-simple.md",
+      "deterministic_structure": true,
+      "hashes": [
+        "2e59c41b29e31a10648047a13739170e40b0b3cee04db00445516fdca7c9deaa",
+        "2e59c41b29e31a10648047a13739170e40b0b3cee04db00445516fdca7c9deaa",
+        "2e59c41b29e31a10648047a13739170e40b0b3cee04db00445516fdca7c9deaa"
+      ]
+    },
+    {
+      "trial_id": "realistic-5-person-complex",
+      "prompt_path": "artifacts/prompt_trials/realistic-5-person-complex.md",
+      "deterministic_structure": true,
+      "hashes": [
+        "361dc0e2bff9bf27a700c442b9ea256fd6adcd9fb5559d554e0be85492933a46",
+        "361dc0e2bff9bf27a700c442b9ea256fd6adcd9fb5559d554e0be85492933a46",
+        "361dc0e2bff9bf27a700c442b9ea256fd6adcd9fb5559d554e0be85492933a46"
+      ]
+    }
+  ]
+}
