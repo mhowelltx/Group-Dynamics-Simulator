@@ -193,15 +193,15 @@ When starting a new session on this project:
 
 Use this section at the **end of every work session** to leave clear continuity for the next session.
 
-- **Current milestone**: Gate B — Relationship Matrix + Group Context + Scenario Builder + Simulation Config tabs implemented in workbook build script; pending manual integration validation in Excel/Google Sheets.
-- **Last completed task ID**: 1.6 (Gate B tabs added and pre-populated via `scripts/build_workbook.py`; workbook at `workbook/group-dynamics-simulator-phase1.xlsx`)
+- **Current milestone**: Gate C — Prompt assembly and logging tabs implemented (`Structured Profile Output`, `Prompt Inputs`, `Simulation Output Log`, `Visuals`) in workbook build script; pending deterministic prompt validation and manual workbook QA.
+- **Last completed task ID**: 1.9 (Gate C workbook scaffolding implemented in `scripts/build_workbook.py`; workbook at `workbook/group-dynamics-simulator-phase1.xlsx`)
 - **Next 3 concrete tasks**:
-  1. Open `workbook/group-dynamics-simulator-phase1.xlsx` and run Gate B integration checks: relationship self-link rejection, range validations, enum validations, and network/group/scenario/config formulas.
-  2. Fill Gate-A-Validation-Log plus a Gate B run note in `PLAN.md` confirming integrated Gate A+B contract checks pass.
-  3. Begin Gate C prompt-assembly tab implementation once Gate B DoD evidence is captured.
+  1. Run Gate B+Gate C integration checks in `workbook/group-dynamics-simulator-phase1.xlsx`: relationship self-link rejection, range validations, enum validations, and prompt/log formulas.
+  2. Execute Gate C determinism QA (>=3 consecutive exports with unchanged data) and record outcomes in `PLAN.md` run notes.
+  3. Begin Prompt Engineering task 1.10 using the generated prompt block and rubric scoring loop.
 - **Known blockers**:
-  - Manual workbook validation still required (open the .xlsx, check formulas evaluate correctly, confirm conditional formatting fires on bad data).
-  - Gate C blocked until Gate B integrated validation evidence is recorded.
+  - Manual workbook validation still required (open the .xlsx, check formulas evaluate correctly, confirm conditional formatting and list validations fire on bad data).
+  - Gate C DoD evidence (determinism log + checklist) not yet recorded in `PLAN.md`.
 - **Open decisions with owner/date**:
 
 | Decision | Owner | Target date | Status |
