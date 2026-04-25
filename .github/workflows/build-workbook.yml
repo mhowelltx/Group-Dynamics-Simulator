@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - 'scripts/build_workbook.py'
+      - 'scripts/prompt_trial_runner.py'
       - 'requirements.txt'
       - '.github/workflows/build-workbook.yml'
   push:
@@ -12,6 +13,7 @@ on:
       - main
     paths:
       - 'scripts/build_workbook.py'
+      - 'scripts/prompt_trial_runner.py'
       - 'requirements.txt'
       - '.github/workflows/build-workbook.yml'
 
@@ -37,9 +39,25 @@ jobs:
       - name: Verify workbook exists
         run: test -f workbook/group-dynamics-simulator-phase1.xlsx
 
+      - name: Generate prompt trial artifacts
+        run: python scripts/prompt_trial_runner.py
+
+      - name: Verify prompt trial artifacts exist
+        run: |
+          test -f artifacts/prompt_trials/synthetic-3-person-simple.md
+          test -f artifacts/prompt_trials/realistic-5-person-complex.md
+          test -f artifacts/prompt_trials/determinism_report.json
+
       - name: Upload workbook artifact
         uses: actions/upload-artifact@v4
         with:
           name: group-dynamics-simulator-phase1
           path: workbook/group-dynamics-simulator-phase1.xlsx
+          if-no-files-found: error
+
+      - name: Upload prompt trial artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1-prompt-trials
+          path: artifacts/prompt_trials/
           if-no-files-found: error

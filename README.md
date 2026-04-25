@@ -28,6 +28,12 @@ Expected output file:
 
 `workbook/group-dynamics-simulator-phase1.xlsx`
 
+The generated workbook includes Gate A–D support tabs:
+- `Gate-A-Validation-Log`
+- `Gate-B-Validation-Log`
+- `Gate-C-Determinism-Log`
+- `Gate-D-Run-Log`
+
 ## Run Phase 1.10 prompt trial artifacts
 
 Generate deterministic prompt trial artifacts for:
@@ -41,3 +47,9 @@ python3 scripts/prompt_trial_runner.py
 Expected output folder:
 
 `artifacts/prompt_trials/`
+
+## GitHub Actions outputs
+
+The `Build Workbook` workflow uploads two downloadable artifacts:
+- `group-dynamics-simulator-phase1` → the generated workbook `.xlsx`
+- `phase1-prompt-trials` → prompt trial markdown files + `determinism_report.json`
