@@ -204,12 +204,12 @@ When starting a new session on this project:
 
 Use this section at the **end of every work session** to leave clear continuity for the next session.
 
-- **Current milestone**: Phase 2 Week 1 Foundation — complete. App boots, all routes return 200, integration tests pass.
-- **Last completed task ID**: Full Phase 2 foundation build — models, schemas, routers, validation service, prompt builder, templates, main app. Branch: `claude/implement-phase-2-gy89c`.
+- **Current milestone**: Phase 2 Week 1 Foundation+ — run history filtering UI landed on `/simulations/`.
+- **Last completed task ID**: Added simulation run list filters (group, scenario, prompt version key) in router + template. Branch: `work`.
 - **Next 3 concrete tasks**:
   1. Add Phase 1 xlsx import CLI (`scripts/import_phase1.py`) that reads the spreadsheet and calls the validation layer before writing to the SQLite DB.
-  2. Add run history filtering UI (filter by group, scenario, prompt version key) to `/simulations/` list view.
-  3. Add integration test suite (`tests/`) covering: entity CRUD, validation sum checks, prompt builder determinism, and run lifecycle.
+  2. Add integration test suite (`tests/`) covering: entity CRUD, validation sum checks, prompt builder determinism, and run lifecycle.
+  3. Add run status polling + pagination to `/simulations/` routes and UI (`API-02` + `UI-02` alignment).
 - **Known blockers**:
   - Auth boundary for personal-use MVP: currently none (localhost only). Confirm this is acceptable before adding any network exposure.
   - Migration approach from Phase 1 xlsx to canonical DB not yet implemented (import CLI is next task).
