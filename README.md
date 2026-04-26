@@ -48,6 +48,35 @@ Expected output folder:
 
 `artifacts/prompt_trials/`
 
+
+### Deploy with preloaded manual-test data
+
+For environments where you want data available immediately for manual QA/UAT, use either option below:
+
+```bash
+# one-time seed
+python3 scripts/seed_test_data.py
+
+# or seed automatically whenever the app starts
+SEED_TEST_DATA=true python3 run.py
+```
+
+Seeding is idempotent: if the anchor group `manual-test-team` already exists, no duplicate records are inserted.
+
+
+### GitHub Actions Railway deployment
+
+This repo includes `.github/workflows/deploy-railway.yml` for deploying to Railway on pushes to `main` (or manual dispatch).
+
+Required GitHub repository secrets:
+
+- `RAILWAY_TOKEN` (project token)
+- `RAILWAY_PROJECT_ID`
+- `RAILWAY_ENVIRONMENT_ID`
+- `RAILWAY_SERVICE_ID`
+
+The workflow enforces `SEED_TEST_DATA=true` on the target Railway service before running `railway up --ci`, so deployed instances start with manual-test data for QA/UAT.
+
 ## GitHub Actions outputs
 
 The `Build Workbook` workflow uploads two downloadable artifacts:

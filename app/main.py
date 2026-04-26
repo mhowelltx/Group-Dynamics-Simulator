@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from app.database import init_db, SessionLocal
+from app.seed import seed_test_data, should_seed_test_data
 from app.models.entities import Person, GroupContext, Scenario, SimulationRun
 from app.routers import people, assessments, relationships, groups, scenarios, configs, simulations
 
@@ -28,6 +29,12 @@ app.include_router(simulations.router)
 @app.on_event("startup")
 def on_startup():
     init_db()
+    if should_seed_test_data():
+        db: Session = SessionLocal()
+        try:
+            seed_test_data(db)
+        finally:
+            db.close()
 
 
 @app.get("/", response_class=HTMLResponse)
