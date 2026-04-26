@@ -48,6 +48,18 @@ Expected output folder:
 
 `artifacts/prompt_trials/`
 
+## Import a Phase 1 workbook into the Phase 2 database
+
+Use the importer to validate and load the generated workbook into the canonical schema.
+
+```bash
+# validate only
+python3 scripts/import_phase1.py --workbook workbook/group-dynamics-simulator-phase1.xlsx --preflight-only
+
+# validate + import
+python3 scripts/import_phase1.py --workbook workbook/group-dynamics-simulator-phase1.xlsx
+```
+
 
 ### Deploy with preloaded manual-test data
 
