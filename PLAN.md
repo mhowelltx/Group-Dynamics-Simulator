@@ -757,6 +757,43 @@ Use this checklist to confirm Gate A is complete before beginning Gate B.
 - **Import compatibility risk**: Spreadsheet exports may contain legacy formatting, missing optional fields, or stale enum values.
   - Mitigation: Build import preflight validator with actionable errors, normalization adapters, and explicit backward-compatibility rules.
 
+### Next Iteration Plan (2026-04-27 → 2026-05-03)
+
+**Iteration objective**: close the highest-impact Week 2 gaps so the project can enter Week 3 validation work with a stable import path, test baseline, and simulation history UX parity.
+
+**Scope aligned to Phase 2 exit criteria (priority order)**:
+
+1. **Spreadsheet import path (critical)**
+   - Build `scripts/import_phase1.py` to ingest Phase 1 workbook exports into canonical entities.
+   - Add preflight validation output for:
+     - unmapped required fields,
+     - enum/range violations,
+     - cross-reference failures (`person.id`, relationship edges, scenario/config linkages).
+   - Exit target: one full synthetic Phase 1 dataset imports with zero unmapped required fields.
+
+2. **Automated validation coverage (critical)**
+   - Create a first integration test suite for core lifecycle paths:
+     - create/update canonical entities,
+     - validation sum checks (conflict/attachment),
+     - prompt builder determinism for a fixed dataset/config,
+     - simulation run creation + rubric persistence.
+   - Exit target: local test run is green and ready to be wired into CI.
+
+3. **Run history filtering + status UX hardening (high)**
+   - Complete `/simulations/` filtering by group, scenario, date range, and prompt version key.
+   - Add pagination and status polling behavior consistency checks between UI and API payloads.
+   - Exit target: user can reliably narrow historical runs and inspect status without manual refresh ambiguity.
+
+4. **Deployment control-plane cleanup decision follow-through (medium)**
+   - Keep Railway native GitHub integration as the only deployment path.
+   - Ensure docs/checklists reference a single deploy mechanism.
+   - Exit target: no duplicated deployment instructions remain in active workflow docs.
+
+**Out-of-scope this iteration**:
+- New framework features from Phases 3–5.
+- Auth model expansion beyond current local/personal-use boundary.
+- Non-critical UX polish unrelated to Week 2/Week 3 gating criteria.
+
 ---
 
 ## Phase 3 — Transcript & Notes Ingestion
