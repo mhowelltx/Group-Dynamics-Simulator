@@ -1,6 +1,6 @@
 # Group Dynamics Simulator — Implementation Plan
 
-**Last updated**: 2026-04-25
+**Last updated**: 2026-04-26
 **Current phase**: Phase 2 — Web Application (In Progress)
 **Design reference**: `Goup Dynamics Simulator - High-Level System Design.md`
 
@@ -11,7 +11,7 @@
 | Phase | Description | Status | Branch |
 |-------|-------------|--------|--------|
 | 1 | Spreadsheet Prototype | ✅ Complete | `claude/plan-group-simulator-5kmcc` |
-| 2 | Web Application | ⬜ Not Started | TBD |
+| 2 | Web Application | 🚧 In Progress | `work` |
 | 3 | Transcript & Notes Ingestion | ⬜ Not Started | TBD |
 | 4 | Intervention Lab | ⬜ Not Started | TBD |
 | 5 | Research Workspace | ⬜ Not Started | TBD |
@@ -830,6 +830,8 @@ Record one row for each run with `run_status=failed_guardrail` to support prompt
 | 2026-04-24 | Hybrid multi-agent simulation approach (not pure LLM roleplay) | Keeps AI anchored to structured data, prevents drift and stereotyping |
 | 2026-04-24 | Use Excel (.xlsx) as Phase 1 workbook format, built via Python/openpyxl (`scripts/build_workbook.py`) | Enables version-controlled, reproducible workbook generation; eliminates manual tab setup errors; easily importable into Google Sheets if sharing is needed later |
 | 2026-04-24 | Pre-populate synthetic dataset directly in the build script | Guarantees all 17 Gate A validation checks have test data to run against from day one |
+| 2026-04-26 | Add deterministic, idempotent seed dataset for manual QA/UAT | Enables deploys/local runs to be testable immediately without hand-entering entities |
+| 2026-04-26 | Prefer Railway-native auto-deploy from `main` over GitHub Action-driven deploy | Reduces operational complexity and removes duplicated deployment control planes |
 
 ---
 
@@ -839,4 +841,4 @@ Record one row for each run with `run_status=failed_guardrail` to support prompt
 - **Prompt format**: Should prompt blocks be JSON, YAML, or structured natural language? JSON is machine-parseable; natural language may produce better simulation quality. Hybrid likely best — natural language narrative wrapping JSON data blocks.
 - **Evidence confidence scale**: Design doc mentions 1–5 numeric or categorical labels (Validated/Self-report/Observed/Inferred/Missing). Categorical is clearer for users; can map to numeric for computations.
 - **OCEAN scoring**: Design doc recommends IPIP-based Big Five (50-item or 120-item). In Phase 1, allow manual score entry (pre-computed from any validated instrument) rather than administering the assessment in the spreadsheet.
-- **Phase 2 stack confirmation**: Confirm Python/FastAPI vs. Node.js/Express before starting Phase 2. User preference matters here.
+- **Phase 2 stack confirmation**: ~~Open~~ **Resolved** — FastAPI + SQLite + Jinja2.

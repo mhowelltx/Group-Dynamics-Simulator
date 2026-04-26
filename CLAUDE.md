@@ -31,9 +31,9 @@ Phase 1 established and validated the spreadsheet-first contract artifacts (fiel
 ### Phase 2 — Web Application (CURRENT)
 Build the canonical web application and data layer that operationalize the Phase 1 contract in production-grade services.
 
-**Branch**: TBD (create from main when implementation starts)
+**Branch**: `work`
 **Status**: 🚧 In progress (authoritative status tracked in `PLAN.md`)
-**Stack direction**: TBD lock decision pending; design remains stack-agnostic until lock decision is made
+**Stack direction**: Locked — FastAPI + SQLite + Jinja2
 
 ## Active Branch Convention
 
@@ -204,15 +204,16 @@ When starting a new session on this project:
 
 Use this section at the **end of every work session** to leave clear continuity for the next session.
 
-- **Current milestone**: Phase 2 Week 1 Foundation+ — run history filtering UI landed on `/simulations/`.
-- **Last completed task ID**: Added simulation run list filters (group, scenario, prompt version key) in router + template. Branch: `work`.
+- **Current milestone**: Phase 2 Week 2 CRUD Hardening — deployment/data-seeding handoff prepared for Claude Code continuation.
+- **Last completed task ID**: Added deterministic test-data seed path (`SEED_TEST_DATA`) plus Railway deployment guidance/workflow artifacts. Branch: `work`.
 - **Next 3 concrete tasks**:
-  1. Add Phase 1 xlsx import CLI (`scripts/import_phase1.py`) that reads the spreadsheet and calls the validation layer before writing to the SQLite DB.
-  2. Add integration test suite (`tests/`) covering: entity CRUD, validation sum checks, prompt builder determinism, and run lifecycle.
-  3. Add run status polling + pagination to `/simulations/` routes and UI (`API-02` + `UI-02` alignment).
+  1. Implement Phase 1 xlsx import CLI (`scripts/import_phase1.py`) with preflight validation + clear error report for unmapped/invalid fields.
+  2. Add integration test suite (`tests/`) for CRUD, validation sum checks, prompt builder determinism, and simulation run lifecycle.
+  3. Finish `/simulations/` UX hardening: date-range filtering, pagination, and run status polling.
 - **Known blockers**:
   - Auth boundary for personal-use MVP: currently none (localhost only). Confirm this is acceptable before adding any network exposure.
-  - Migration approach from Phase 1 xlsx to canonical DB not yet implemented (import CLI is next task).
+  - Phase 1 workbook → canonical DB migration path not implemented yet (import CLI is next task).
+  - Confirm whether deployment source of truth is Railway native GitHub integration or `.github/workflows/deploy-railway.yml`, then remove the unused path.
 - **Open decisions with owner/date**:
 
 | Decision | Owner | Target date | Status |
@@ -221,6 +222,7 @@ Use this section at the **end of every work session** to leave clear continuity 
 | Define MVP auth model (none/local-only/basic account) | Project owner | 2026-04-30 | Open — currently no auth (localhost only) |
 | Confirm migration path from spreadsheet artifacts to canonical schema | Project owner | 2026-05-02 | Open — import CLI is next task |
 | Finalize test strategy (unit/integration/e2e + simulation contract tests) | Project owner | 2026-05-03 | Open |
+| Choose single deployment control plane (Railway native vs GitHub Action) | Project owner | 2026-04-27 | Open |
 
 ### End-of-Session Update Checklist (<= 5 minutes)
 
