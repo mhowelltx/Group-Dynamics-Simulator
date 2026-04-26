@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -21,9 +21,48 @@ def _opt_int(v) -> Optional[int]:
 
 
 @router.get("/", response_class=HTMLResponse)
-def list_runs(request: Request, db: Session = Depends(get_db)):
-    runs = db.query(SimulationRun).order_by(SimulationRun.generated_at_utc.desc()).all()
-    return templates.TemplateResponse(request, "simulations/list.html", {"runs": runs})
+def list_runs(
+    request: Request,
+    group_id: Optional[str] = Query(default=None),
+    scenario_id: Optional[str] = Query(default=None),
+    prompt_version_key: Optional[str] = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    query = db.query(SimulationRun)
+    if group_id:
+        query = query.filter(SimulationRun.group_id == group_id)
+    if scenario_id:
+        query = query.filter(SimulationRun.scenario_id == scenario_id)
+    if prompt_version_key:
+        query = query.join(SimulationConfig).filter(
+            SimulationConfig.prompt_version_key == prompt_version_key
+        )
+
+    runs = query.order_by(SimulationRun.generated_at_utc.desc()).all()
+    groups = db.query(GroupContext).order_by(GroupContext.id).all()
+    scenarios = db.query(Scenario).order_by(Scenario.id).all()
+    prompt_versions = [
+        row[0]
+        for row in db.query(SimulationConfig.prompt_version_key)
+        .distinct()
+        .order_by(SimulationConfig.prompt_version_key.desc())
+        .all()
+    ]
+    return templates.TemplateResponse(
+        request,
+        "simulations/list.html",
+        {
+            "runs": runs,
+            "groups": groups,
+            "scenarios": scenarios,
+            "prompt_versions": prompt_versions,
+            "filters": {
+                "group_id": group_id or "",
+                "scenario_id": scenario_id or "",
+                "prompt_version_key": prompt_version_key or "",
+            },
+        },
+    )
 
 
 @router.get("/new", response_class=HTMLResponse)

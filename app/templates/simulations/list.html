@@ -6,6 +6,44 @@
   <a href="/simulations/new" class="btn btn-danger btn-sm"><i class="bi bi-play-circle me-1"></i>New Run</a>
 </div>
 
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body">
+    <form method="get" action="/simulations/" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label form-label-sm">Group</label>
+        <select name="group_id" class="form-select form-select-sm">
+          <option value="">All groups</option>
+          {% for g in groups %}
+          <option value="{{ g.id }}" {% if filters.group_id == g.id %}selected{% endif %}>{{ g.id }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label form-label-sm">Scenario</label>
+        <select name="scenario_id" class="form-select form-select-sm">
+          <option value="">All scenarios</option>
+          {% for s in scenarios %}
+          <option value="{{ s.id }}" {% if filters.scenario_id == s.id %}selected{% endif %}>{{ s.id }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label form-label-sm">Prompt version</label>
+        <select name="prompt_version_key" class="form-select form-select-sm">
+          <option value="">All versions</option>
+          {% for v in prompt_versions %}
+          <option value="{{ v }}" {% if filters.prompt_version_key == v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary btn-sm">Apply filters</button>
+        <a href="/simulations/" class="btn btn-outline-secondary btn-sm">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
 {% if runs %}
 <div class="card border-0 shadow-sm">
   <div class="card-body p-0">
