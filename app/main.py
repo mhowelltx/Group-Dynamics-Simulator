@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+from pathlib import Path
 
 from app.database import init_db, SessionLocal
 from app.seed import seed_test_data, should_seed_test_data
@@ -11,10 +12,17 @@ from app.routers import people, assessments, relationships, groups, scenarios, c
 
 app = FastAPI(title="Group Dynamics Simulator", version="2.0.0")
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+TEMPLATES_DIR = BASE_DIR / "templates"
 
-templates = Jinja2Templates(directory="app/templates")
+# Ensure static directory always exists in fresh deployment environments.
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 # Register routers
 app.include_router(people.router)
