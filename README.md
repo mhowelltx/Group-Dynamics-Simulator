@@ -74,6 +74,7 @@ SEED_TEST_DATA=true python3 run.py
 ```
 
 Seeding is idempotent: if the anchor group `manual-test-team` already exists, no duplicate records are inserted.
+The deterministic seed fixture is stored at `app/seed_data/manual_test_team.json`.
 
 
 ### GitHub Actions Railway deployment
