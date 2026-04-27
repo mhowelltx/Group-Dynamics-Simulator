@@ -35,14 +35,107 @@ def should_seed_test_data() -> bool:
     return _as_bool(os.getenv("SEED_TEST_DATA"))
 
 
+def _snapshot_jordan() -> AssessmentSnapshot:
+    return AssessmentSnapshot(
+        person_id="jordan.kim",
+        evidence_source="observed",
+        big_five_openness=61,
+        big_five_conscientiousness=70,
+        big_five_extraversion=55,
+        big_five_agreeableness=66,
+        big_five_neuroticism=47,
+        conflict_competing=12,
+        conflict_collaborating=31,
+        conflict_compromising=29,
+        conflict_avoiding=18,
+        conflict_accommodating=10,
+        psych_safety_item_1=3,
+        psych_safety_item_2=3,
+        psych_safety_item_3=4,
+        psych_safety_item_4=3,
+        psych_safety_item_5=3,
+        psych_safety_item_6=4,
+        psych_safety_item_7=3,
+        comm_directness=58,
+        comm_context_orientation=62,
+        comm_verbal_dominance=44,
+        comm_listening_quality=73,
+        comm_feedback_tolerance=67,
+        decision_analytical_vs_intuitive=69,
+        decision_risk_appetite=41,
+        decision_speed=54,
+        decision_ambiguity_tolerance=49,
+        eq_perceiving=71,
+        eq_using=64,
+        eq_understanding=70,
+        eq_managing=62,
+        attachment_secure=48,
+        attachment_anxious=26,
+        attachment_avoidant=16,
+        attachment_fearful=10,
+    )
+
+
+def _snapshot_sam() -> AssessmentSnapshot:
+    return AssessmentSnapshot(
+        person_id="sam.patel",
+        evidence_source="observed",
+        big_five_openness=74,
+        big_five_conscientiousness=68,
+        big_five_extraversion=49,
+        big_five_agreeableness=72,
+        big_five_neuroticism=33,
+        conflict_competing=10,
+        conflict_collaborating=39,
+        conflict_compromising=24,
+        conflict_avoiding=15,
+        conflict_accommodating=12,
+        psych_safety_item_1=4,
+        psych_safety_item_2=4,
+        psych_safety_item_3=4,
+        psych_safety_item_4=4,
+        psych_safety_item_5=4,
+        psych_safety_item_6=4,
+        psych_safety_item_7=4,
+        comm_directness=52,
+        comm_context_orientation=70,
+        comm_verbal_dominance=38,
+        comm_listening_quality=82,
+        comm_feedback_tolerance=76,
+        decision_analytical_vs_intuitive=74,
+        decision_risk_appetite=36,
+        decision_speed=46,
+        decision_ambiguity_tolerance=64,
+        eq_perceiving=78,
+        eq_using=73,
+        eq_understanding=77,
+        eq_managing=79,
+        attachment_secure=63,
+        attachment_anxious=14,
+        attachment_avoidant=15,
+        attachment_fearful=8,
+    )
+
+
 def seed_test_data(db: Session) -> dict[str, int]:
     """Seed a deterministic sample dataset for manual UI/API testing.
 
-    Idempotent behavior: if the anchor group already exists, no inserts occur.
+    Idempotent behavior:
+    - first run inserts full anchor dataset,
+    - later runs backfill missing manual-test assessment snapshots only.
     """
     anchor_group_id = "manual-test-team"
     if db.get(GroupContext, anchor_group_id):
-        return {"inserted": 0, "skipped": 1}
+        inserted = 0
+        if not db.query(AssessmentSnapshot).filter(AssessmentSnapshot.person_id == "jordan.kim").first():
+            db.add(_snapshot_jordan())
+            inserted += 1
+        if not db.query(AssessmentSnapshot).filter(AssessmentSnapshot.person_id == "sam.patel").first():
+            db.add(_snapshot_sam())
+            inserted += 1
+        if inserted:
+            db.commit()
+        return {"inserted": inserted, "skipped": 0 if inserted else 1}
 
     people = [
         Person(id="alex.chen", display_name="Alex Chen", role="leader", group_membership="manual-test-team", authority_level=5),
@@ -128,6 +221,8 @@ def seed_test_data(db: Session) -> dict[str, int]:
             psych_safety_item_6=4,
             psych_safety_item_7=3,
         ),
+        _snapshot_jordan(),
+        _snapshot_sam(),
     ]
     db.add_all(assessments)
 
