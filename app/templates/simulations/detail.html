@@ -18,6 +18,16 @@
   Confidence is limited by data quality and completeness. Outputs require human review before any application.
 </div>
 
+{% if saved == "1" %}
+<div class="alert alert-success small">
+  <strong>Saved.</strong> Evaluation and simulation output were recorded for this run.
+</div>
+{% elif save_error %}
+<div class="alert alert-danger small">
+  <strong>Not saved:</strong> {{ save_error }}
+</div>
+{% endif %}
+
 <div class="row g-3">
   <!-- Left column: run metadata + prompt -->
   <div class="col-md-5">
@@ -95,6 +105,132 @@
         </form>
       </div>
     </div>
+
+    <!-- Pass outputs -->
+    {% if latest_output %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">Structured Result View</div>
+      <div class="card-body">
+        <div class="row g-2 mb-3">
+          <div class="col-md-4">
+            <div class="border rounded p-2 small">
+              <div class="text-muted">Run status</div>
+              <div class="fw-semibold">{{ latest_output.run_status or "unknown" }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-2 small">
+              <div class="text-muted">Coverage ratio</div>
+              <div class="fw-semibold">
+                {% if latest_output.evidence_coverage and latest_output.evidence_coverage.coverage_ratio is not none %}
+                  {{ ((latest_output.evidence_coverage.coverage_ratio * 100) | round(1)) }}%
+                {% else %}—{% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-2 small">
+              <div class="text-muted">Overall confidence</div>
+              <div class="fw-semibold">
+                {% if latest_output.evidence_coverage and latest_output.evidence_coverage.overall_confidence is not none %}
+                  {{ ((latest_output.evidence_coverage.overall_confidence * 100) | round(1)) }}%
+                {% else %}—{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {% if latest_output.confidence_statement %}
+        <div class="mb-2">
+          <div class="small text-muted fw-semibold">Confidence statement</div>
+          <div class="small">{{ latest_output.confidence_statement }}</div>
+        </div>
+        {% endif %}
+        {% if latest_output.limitation_statement %}
+        <div class="mb-3">
+          <div class="small text-muted fw-semibold">Limitation statement</div>
+          <div class="small">{{ latest_output.limitation_statement }}</div>
+        </div>
+        {% endif %}
+
+        {% if latest_output.outcome_clusters %}
+        <h6 class="mb-2">Outcome Clusters</h6>
+        <div class="table-responsive mb-3">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Label</th>
+                <th>Probability</th>
+                <th>Confidence</th>
+                <th>Narrative</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in latest_output.outcome_clusters %}
+              <tr>
+                <td>{{ c.label or c.cluster_id or "—" }}</td>
+                <td>{% if c.probability is not none %}{{ ((c.probability * 100) | round(1)) }}%{% else %}—{% endif %}</td>
+                <td>{% if c.confidence is not none %}{{ ((c.confidence * 100) | round(1)) }}%{% else %}—{% endif %}</td>
+                <td class="small">{{ c.narrative or "—" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+
+        {% if latest_output.individual_forecasts %}
+        <h6 class="mb-2">Individual Forecasts</h6>
+        <div class="accordion mb-3" id="forecastAcc">
+          {% for f in latest_output.individual_forecasts %}
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed py-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#forecast{{ loop.index }}">
+                {{ f.person_id or "unknown-person" }}
+              </button>
+            </h2>
+            <div id="forecast{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#forecastAcc">
+              <div class="accordion-body small">
+                <div><strong>Likely behaviors:</strong> {{ (f.likely_behaviors or []) | join(', ') if f.likely_behaviors else "—" }}</div>
+                <div><strong>Stress response:</strong> {{ f.stress_response or "—" }}</div>
+                <div><strong>Influence on others:</strong> {{ f.influence_on_others or "—" }}</div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if latest_output.interventions %}
+        <h6 class="mb-2">Interventions</h6>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Target</th>
+                <th>Expected effect</th>
+                <th>Risk</th>
+                <th>Impact</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for i in latest_output.interventions %}
+              <tr>
+                <td>{{ i.description or i.intervention_id or "—" }}</td>
+                <td>{{ i.target_level or "—" }}</td>
+                <td class="small">{{ i.expected_effect or "—" }}</td>
+                <td class="small">{{ i.risk or "—" }}</td>
+                <td>{% if i.estimated_impact is not none %}{{ ((i.estimated_impact * 100) | round(1)) }}%{% else %}—{% endif %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
 
     <!-- Pass outputs -->
     {% if run.passes %}

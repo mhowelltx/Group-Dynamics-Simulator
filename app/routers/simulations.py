@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from typing import Optional
+from urllib.parse import quote_plus
 from app.database import get_db
 from app.models.entities import (
     SimulationRun, SimulationPass, GroupContext, Scenario, SimulationConfig
@@ -134,8 +135,18 @@ def view_run(run_id: str, request: Request, db: Session = Depends(get_db)):
         except Exception:
             pass
 
-    return templates.TemplateResponse(request, "simulations/detail.html", {"run": run, "prompt_text": prompt_text,
-         "rubric_average": run.eval_rubric_average},
+    latest_output = run.passes[-1].output_json if run.passes else None
+    saved = request.query_params.get("saved")
+    save_error = request.query_params.get("error")
+
+    return templates.TemplateResponse(request, "simulations/detail.html", {
+        "run": run,
+        "prompt_text": prompt_text,
+        "rubric_average": run.eval_rubric_average,
+        "latest_output": latest_output,
+        "saved": saved,
+        "save_error": save_error,
+    },
     )
 
 
@@ -177,10 +188,14 @@ async def save_evaluation(run_id: str, request: Request, db: Session = Depends(g
             )
             db.add(pass_obj)
         except json.JSONDecodeError:
-            pass
+            db.commit()
+            return RedirectResponse(
+                url=f"/simulations/{run_id}?saved=0&error={quote_plus('Output JSON is invalid. Please paste valid JSON.')}",
+                status_code=303,
+            )
 
     db.commit()
-    return RedirectResponse(url=f"/simulations/{run_id}", status_code=303)
+    return RedirectResponse(url=f"/simulations/{run_id}?saved=1", status_code=303)
 
 
 @router.post("/{run_id}/delete")
