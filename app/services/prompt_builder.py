@@ -33,6 +33,7 @@ from app.models.entities import (
 
 OUTPUT_REQUIREMENTS = """Return one JSON object that exactly matches the schema in this contract.
 No markdown. No prose outside JSON.
+Use strict JSON (double-quoted keys/strings, no trailing commas, no comments).
 Mandatory sections must be present in every run output:
 1) confidence_statement
 2) limitation_statement
@@ -72,6 +73,26 @@ Output schema:
   "limitations": [],
   "run_status": "ok|failed_guardrail"
 }"""
+
+SIMULATION_INSTRUCTIONS = """Run the configured number of passes internally, then aggregate into one final JSON object.
+For each internal pass, reason through:
+1) private appraisal by each person,
+2) first public response,
+3) interaction sequence,
+4) conflict/stabilization update,
+5) decision or non-decision point,
+6) outcome classification.
+Reflect uncertainty explicitly and avoid deterministic language.
+If evidence is missing for a person/field, keep claims conservative and list missing field IDs in evidence_coverage."""
+
+
+def _drop_none_values(obj):
+    if isinstance(obj, dict):
+        filtered = {k: _drop_none_values(v) for k, v in obj.items() if v is not None}
+        return filtered
+    if isinstance(obj, list):
+        return [_drop_none_values(x) for x in obj]
+    return obj
 
 
 def _person_block(person, snapshot: Optional[AssessmentSnapshot]) -> dict:
@@ -122,11 +143,11 @@ def _person_block(person, snapshot: Optional[AssessmentSnapshot]) -> dict:
             "evidence_source": snapshot.evidence_source,
             "missing_data_flag": snapshot.missing_data_flag,
         })
-    return p
+    return _drop_none_values(p)
 
 
 def _relationship_block(edge: RelationshipEdge) -> dict:
-    return {
+    return _drop_none_values({
         "rel.from_person_id": edge.from_person_id,
         "rel.to_person_id": edge.to_person_id,
         "rel.trust": edge.trust,
@@ -141,11 +162,11 @@ def _relationship_block(edge: RelationshipEdge) -> dict:
         "rel.power_differential": edge.power_differential,
         "rel.evidence_source": edge.evidence_source,
         "rel.notes": edge.notes,
-    }
+    })
 
 
 def _group_block(group: GroupContext) -> dict:
-    return {
+    return _drop_none_values({
         "group.id": group.id,
         "group.type": group.type,
         "group.structure": group.structure,
@@ -158,11 +179,11 @@ def _group_block(group: GroupContext) -> dict:
         "group.role_clarity": group.role_clarity,
         "group.cultural_context": group.cultural_context,
         "group.environmental_constraints": group.environmental_constraints,
-    }
+    })
 
 
 def _scenario_block(scenario: Scenario) -> dict:
-    return {
+    return _drop_none_values({
         "scenario.id": scenario.id,
         "scenario.title": scenario.title,
         "scenario.type": scenario.type,
@@ -179,11 +200,11 @@ def _scenario_block(scenario: Scenario) -> dict:
         "scenario.known_facts": scenario.known_facts or [],
         "scenario.uncertain_facts": scenario.uncertain_facts or [],
         "scenario.intervention_options": scenario.intervention_options or [],
-    }
+    })
 
 
 def _config_block(config: SimulationConfig) -> dict:
-    return {
+    return _drop_none_values({
         "sim.prompt_version_key": config.prompt_version_key,
         "sim.passes": config.passes,
         "sim.randomness": config.randomness,
@@ -193,7 +214,7 @@ def _config_block(config: SimulationConfig) -> dict:
         "sim.intervention_mode": config.intervention_mode,
         "sim.evidence_strictness": config.evidence_strictness,
         "sim.guardrail_verbosity": config.guardrail_verbosity,
-    }
+    })
 
 
 def build_prompt(db: Session, run: SimulationRun) -> str:
@@ -234,6 +255,7 @@ def build_prompt(db: Session, run: SimulationRun) -> str:
         .all()
     )
     rel_blocks = [_relationship_block(e) for e in edges]
+    people_with_assessments = sum(1 for p in people_blocks if "evidence_source" in p)
 
     parts = [
         "=== SIMULATION_PROMPT_BEGIN ===",
@@ -242,6 +264,15 @@ def build_prompt(db: Session, run: SimulationRun) -> str:
         f"prompt_version_key: {config.prompt_version_key}",
         f"group_id: {run.group_id}",
         f"scenario_id: {run.scenario_id}",
+        "",
+        "[SIMULATION_INSTRUCTIONS]",
+        SIMULATION_INSTRUCTIONS,
+        "",
+        "[DATA_QUALITY_NOTES]",
+        f"- group_member_count: {len(people_blocks)}",
+        f"- members_with_assessments: {people_with_assessments}",
+        f"- members_missing_assessments: {len(people_blocks) - people_with_assessments}",
+        "- treat missing attributes as unknown; do not fabricate values",
         "",
         "[CONFIG]",
         json.dumps(_config_block(config), indent=2),
